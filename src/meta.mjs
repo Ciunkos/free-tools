@@ -10,13 +10,15 @@ export const innyLang = (lang) => (lang === 'en' ? 'pl' : 'en');
 export const HUB = { en: 'free-tools', pl: 'darmowe-narzedzia' };
 export const HUB_NAME = { en: 'Free tools', pl: 'Darmowe narzędzia' };
 
+import { PAIRS, slugOf } from '../tools/converter/pairs.mjs';
+
 /* Static files sit flat under the EN hub: /free-tools/app.css, /free-tools/icons/…, /free-tools/<tool>/<file>.
    On disk they live in public/free-tools/ (PUB), next to the generated pages. */
 export const ASSETY = '/' + HUB.en;
 export const PUB = 'public' + ASSETY;
 export const HEALTH = ASSETY + '/health';
 /* Names under /free-tools/ that are files or folders, so no tool slug may take them. */
-export const ZAREZERWOWANE = ['app.css', 'app.mjs', 'site-footer.css', 'icons', 'og', 'img', 'video', 'ph', 'health', 'sitemap.xml', 'llms.txt', 'przemo-160.webp', 'przemo-face.webp', 'kit.mjs'];
+export const ZAREZERWOWANE = ['app.css', 'app.mjs', 'site-footer.css', 'icons', 'og', 'img', 'video', 'ph', 'health', 'sitemap.xml', 'llms.txt', 'przemo-160.webp', 'przemo-face.webp', 'kit.mjs', 'file-converter-vendor'];
 
 /* status 'live' tools are routed, listed and linked. Add 'soon' entries only when you want them on the hub without a link. */
 /* Each tool: status ('live' is routed and linked), layout, slugs, name, the pain it solves (hub and cards), and an icon:
@@ -55,6 +57,18 @@ export const TOOLS = {
     icon: { bg: '#15803d', d: "<path d='M10 3 8 21M16 3l-2 18M4 8.5h16M3.5 15.5h16'/>" },
     category: 'UtilitiesApplication'
   },
+  converter: {
+    status: 'live',
+    layout: 'drop',
+    slug: { en: 'file-converter', pl: 'konwerter-plikow' },
+    name: { en: 'File converter', pl: 'Konwerter plików' },
+    pain: { en: 'MOV to GIF, MP4 to MP3, HEIC to JPG and 30 more, converted on your own computer. Nothing is uploaded.', pl: 'MOV na GIF, MP4 na MP3, HEIC na JPG i 30 innych, konwertowane na Twoim komputerze. Nic nie jest wysyłane.' },
+    color: '#0e7490',
+    icon: { bg: '#0e7490', d: "<path d='M6 3h7l5 5v4M13 3v5h5M6 3v18h6'/><path d='M15 15h6m-2.5-2.5L21 15l-2.5 2.5M21 20h-6m2.5 2.5L15 20l2.5-2.5'/>" },
+    category: 'MultimediaApplication',
+    /* WebCodecs encoders, MP3 and HEIC wasm, their workers and blob previews. Added to this tool's pages only. */
+    csp: { 'script-src': ["'wasm-unsafe-eval'"], 'worker-src': ["'self'", 'blob:'], 'media-src': ["'self'", 'blob:'], 'img-src': ['blob:'] }
+  },
   base64: {
     status: 'live',
     layout: 'workbench',
@@ -79,10 +93,11 @@ export const LIVE = Object.entries(TOOLS).filter(([, t]) => t.status === 'live')
 /** Path of a tool page (no leading slash), e.g. 'free-tools/white-screen'. */
 export const sciezka = (id, lang) => HUB[lang] + '/' + TOOLS[id].slug[lang];
 
-/** Every routed HTML page: hub plus live tools, both languages. */
+/** Every routed HTML page: hub, live tools and the converter's x-to-y pages, both languages. */
 export const STRONY = [
   { id: 'hub', path: { en: HUB.en, pl: HUB.pl } },
-  ...LIVE.map((id) => ({ id, path: { en: sciezka(id, 'en'), pl: sciezka(id, 'pl') } }))
+  ...LIVE.map((id) => ({ id, path: { en: sciezka(id, 'en'), pl: sciezka(id, 'pl') }, csp: TOOLS[id].csp })),
+  ...PAIRS.map((p) => ({ id: 'converter', pair: p.id, path: { en: HUB.en + '/' + slugOf(p, 'en'), pl: HUB.pl + '/' + slugOf(p, 'pl') }, csp: TOOLS.converter.csp }))
 ];
 
 export const LINKI = {

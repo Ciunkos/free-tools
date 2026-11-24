@@ -1,10 +1,11 @@
 /* build.mjs: renders public/<path>.html for the hub and every live tool (EN, PL), copies each tool's client files to
    public/free-tools/<en slug>/, writes the pre-built images, sitemap.xml (with image entries), llms.txt and the asset version.
    Lints every page (CSP, titles, "Przemo says", JSON-LD) and fails on any problem. node build.mjs */
-import { writeFileSync, mkdirSync, readdirSync, readFileSync, statSync, copyFileSync, existsSync } from 'node:fs';
+import { writeFileSync, mkdirSync, readdirSync, readFileSync, statSync, cpSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { dirname } from 'node:path';
 import { STRONY, LANGS, BAZA, HUB, HUB_NAME, TOOLS, LIVE, ASSETY, PUB, ZAREZERWOWANE, sciezka } from './src/meta.mjs';
+import { PAIRS } from './tools/converter/pairs.mjs';
 
 const bledy = [];
 const zapisz = (plik, tresc) => { mkdirSync(dirname(plik), { recursive: true }); writeFileSync(plik, tresc); };
@@ -16,11 +17,7 @@ for (const lang of LANGS) if (!wrangler.includes(`"ciunkos.com/${HUB[lang]}*"`))
 for (const id of LIVE) if (ZAREZERWOWANE.includes(TOOLS[id].slug.en)) bledy.push(`${id}: slug ${TOOLS[id].slug.en} is a reserved file name under ${ASSETY}`);
 
 /* Tool client files: tools/<id>/* except page.mjs, copied flat to public/free-tools/<en slug>/ (served at /free-tools/<slug>/<file>). */
-for (const id of LIVE) for (const f of readdirSync('tools/' + id)) {
-  if (f === 'page.mjs') continue;
-  mkdirSync(`${PUB}/${TOOLS[id].slug.en}`, { recursive: true });
-  copyFileSync(`tools/${id}/${f}`, `${PUB}/${TOOLS[id].slug.en}/${f}`);
-}
+for (const id of LIVE) cpSync('tools/' + id, `${PUB}/${TOOLS[id].slug.en}`, { recursive: true, filter: (src) => !/\/page\.mjs$/.test(src) && !/\/vendor\/(README\.md)$/.test(src) });
 
 /* Shared footer CSS, generated from the synced copy. */
 const { SITE_FOOTER_CSS } = await import('./src/shared/site-footer.mjs');
@@ -53,11 +50,11 @@ const RENDER = { hub: (await import('./src/hub.mjs')).renderHub };
 for (const id of LIVE) RENDER[id] = (await import(`./tools/${id}/page.mjs`)).render;
 
 /* Content dates from git: the last commit touching the page's copy (tool folder, or the hub + registry). */
-const zrodla = (id) => (id === 'hub' ? ['src/hub.mjs', 'src/meta.mjs'] : ['tools/' + id + '/page.mjs']);
+const zrodla = (id) => (id === 'hub' ? ['src/hub.mjs', 'src/meta.mjs'] : id === 'converter' ? ['tools/converter/page.mjs', 'tools/converter/pairs.mjs', 'tools/converter/formats.mjs'] : ['tools/' + id + '/page.mjs']);
 const lastmod = {};
 for (const s of STRONY) for (const lang of LANGS) {
   const modified = zmiana(...zrodla(s.id));
-  const html = RENDER[s.id]({ lang, wersja: WERSJA, updated: modified });
+  const html = RENDER[s.id]({ lang, wersja: WERSJA, updated: modified, pair: s.pair });
   bledy.push(...lintHtml(html, s.path[lang], { tool: s.id !== 'hub' }));
   const out = ulepszLd(html, { modified, published: publikacja(zrodla(s.id)[0]), lang });
   bledy.push(...lintLd(out, s.path[lang]));
@@ -82,6 +79,7 @@ ${STRONY.flatMap((s) => LANGS.map((lang) => `  <url>
 const LLMS = {
   'jwt-decoder': 'Paste a JSON Web Token: header and payload as JSON, every claim explained, expiry in the visitor’s time zone, warnings (alg none, no exp, long-lived), and signature verification with WebCrypto: HS256/384/512 (secret), RS, PS, ES (256/384/512) and EdDSA with a PEM public key, JWK or JWKS (key picked by kid). The token is never sent, stored or put in the URL.',
   'character-counter': 'Characters with and without spaces (grapheme clusters, so an emoji or flag counts as one), words, sentences, paragraphs, lines, UTF-8 bytes, UTF-16 units, reading time (238 wpm) and standard pages (1,800 characters). Live limits for X (weighted: links 23, CJK and emoji 2), LinkedIn 3,000, Instagram 2,200, Threads 500, Bluesky 300, YouTube title 100 and description 5,000, Google title and meta description, plus SMS segments (GSM-7 160/153, Unicode 70/67). Text stays in the browser.',
+  converter: `One converter behind ${PAIRS.length} pages, each a common conversion (${PAIRS.map((p) => p.id).join(', ')}); every page accepts any supported file. Video and audio through WebCodecs (mediabunny; streams are copied when the codec already fits), MP3 via a LAME wasm encoder, video to GIF with 256-colour palettes (default 480 px, 12 fps, 15 s), GIF to MP4, images via the browser (HEIC via libheif wasm when the browser cannot). Files never leave the visitor's computer. Pages: ${BAZA}/free-tools/<from>-to-<to> (Polish: ${BAZA}/darmowe-narzedzia/<from>-na-<to>).`,
   base64: 'Two live panes: text to Base64 and Base64 to text as you type, UTF-8 safe (Polish letters, emoji). Options: URL-safe (base64url), padding, MIME line breaks at 76. The decoder tolerates whitespace, missing padding, URL-safe input and data: URI prefixes, and reports the exact bad character. Files up to 50 MB encode locally, with a data URI copy; binary decodes show an image preview and a download.',
   'white-screen': `A totally white (#FFFFFF) page that goes full screen with one click or the F key; Esc exits. For cleaning a monitor or TV and seeing every speck, checking for dead or stuck pixels and backlight bleed, or as a light for video calls, make-up and tracing. Shades: pure, warm, cool, dimmed. Keeps the screen awake in full screen (Screen Wake Lock). On iPhone, Add to Home Screen gives edge-to-edge white. Also downloads pure white PNGs of any size up to 16,384 px a side, generated in the browser (ready-made: 1920×1080, 3840×2160, 1179×2556, A4 at 300 dpi), and its own 10-hour pure white video (MP4, 1080p and 4K, CC0): ${BAZA}${ASSETY}/video/white-screen-10-hours-1080p.mp4. On iPhone, where Safari allows only videos to go full screen, the Full screen button plays that video full screen.`
 };

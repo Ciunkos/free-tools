@@ -14,13 +14,20 @@ function phConfigJson(env) {
 class SetPostHogConfig { constructor(env) { this.value = phConfigJson(env); } element(el) { el.setAttribute('data-posthog-config', this.value); } }
 
 /* No inline scripts (CSP without hashes); inline styles stay. No frames: every file, the video too, comes from this site. */
-const CSP = ["default-src 'self'", "script-src 'self'", "connect-src 'self'", "style-src 'self' 'unsafe-inline'", "img-src 'self' data: blob: https://ciunkos.com", "font-src 'self'", "media-src 'self'", "frame-src 'none'", "manifest-src 'self'", "base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'", "object-src 'none'"].join('; ');
+const CSP_BASE = { 'default-src': ["'self'"], 'script-src': ["'self'"], 'connect-src': ["'self'"], 'style-src': ["'self'", "'unsafe-inline'"], 'img-src': ["'self'", 'data:', 'blob:', 'https://ciunkos.com'], 'font-src': ["'self'"], 'media-src': ["'self'"], 'frame-src': ["'none'"], 'manifest-src': ["'self'"], 'base-uri': ["'self'"], 'form-action': ["'self'"], 'frame-ancestors': ["'none'"], 'object-src': ["'none'"] };
+/* A tool may add sources (registry `csp`), e.g. the converter's wasm and workers; every other page keeps the base. */
+function cspFor(extra) {
+  const d = Object.fromEntries(Object.entries(CSP_BASE).map(([k, v]) => [k, [...v]]));
+  for (const [k, v] of Object.entries(extra || {})) d[k] = [...new Set([...(d[k] || []), ...v])];
+  return Object.entries(d).map(([k, v]) => k + ' ' + v.join(' ')).join('; ');
+}
+const CSP = cspFor();
 
 const json = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } });
 
 const TYPY = { webmanifest: 'application/manifest+json', xml: 'application/xml; charset=utf-8', txt: 'text/plain; charset=utf-8' };
 
-function naglowki(res, sciezka, { wersjonowany = false, html = false, testHost = false, twin = null, lang = null, cache = null } = {}) {
+function naglowki(res, sciezka, { wersjonowany = false, html = false, testHost = false, twin = null, lang = null, cache = null, csp = CSP } = {}) {
   const h = new Headers(res.headers);
   h.set('X-Content-Type-Options', 'nosniff');
   h.set('Referrer-Policy', 'strict-origin-when-cross-origin');
@@ -32,7 +39,7 @@ function naglowki(res, sciezka, { wersjonowany = false, html = false, testHost =
   if (html) {
     h.set('Content-Type', 'text/html; charset=utf-8');
     h.set('Cache-Control', cache || 'public, max-age=300');
-    h.set('Content-Security-Policy', CSP);
+    h.set('Content-Security-Policy', csp);
     if (twin && lang) h.set('Link', `<https://${APEX}${twin}>; rel="alternate"; hreflang="${innyLang(lang)}"`);
     h.delete('ETag');
   } else if (/^(webp|png|jpg|svg|ico|woff2?|mp4)$/i.test(ext)) h.set('Cache-Control', wersjonowany ? 'public, max-age=31536000, immutable' : 'public, max-age=604800');
@@ -108,7 +115,7 @@ export default {
       const plik = await env.ASSETS.fetch(new Request(urlF.toString()));
       if (plik.status === 404) return strona404(lang, testHost);
       const rw = new HTMLRewriter().on('script[data-posthog-config]', new SetPostHogConfig(env));
-      return naglowki(rw.transform(plik), '/' + s.path[lang] + '.html', { html: true, testHost, twin: '/' + s.path[innyLang(lang)], lang });
+      return naglowki(rw.transform(plik), '/' + s.path[lang] + '.html', { html: true, testHost, twin: '/' + s.path[innyLang(lang)], lang, csp: s.csp ? cspFor(s.csp) : CSP });
     }
 
     /* Everything else under /free-tools/ is a static file. Generated pages are reachable only by their clean URL. */

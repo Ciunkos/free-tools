@@ -16,7 +16,13 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
+    "@mediabunny/mp3-encoder": "^1.66.0",
     "@playwright/test": "^1.65.1",
+    "esbuild": "^0.28.2",
+    "gifenc": "^1.0.3",
+    "gifuct-js": "^2.1.2",
+    "libheif-js": "^1.23.5",
+    "mediabunny": "^1.66.0",
     "wrangler": "^4.163.0"
   }
 }

@@ -3,6 +3,8 @@
 import { chromium } from '@playwright/test';
 import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { TOOLS, LIVE, HUB_NAME, LANGS, iconSvg } from '../src/meta.mjs';
+import { PAIRS } from '../tools/converter/pairs.mjs';
+import { fmtName } from '../tools/converter/formats.mjs';
 
 mkdirSync('public/free-tools/icons', { recursive: true });
 mkdirSync('public/free-tools/og', { recursive: true });
@@ -17,6 +19,7 @@ const COPY = {
   'white-screen': { en: ['White screen', 'A totally white page, full screen in one click. See every speck while you clean.'], pl: ['Biały ekran', 'Cały ekran na biało jednym kliknięciem. Zobacz każdy pyłek, gdy czyścisz ekran.'] },
   'jwt-decoder': { en: ['JWT decoder', 'Read and verify a token without sending it anywhere.'], pl: ['Dekoder JWT', 'Odczytaj i sprawdź token, nie wysyłając go nigdzie.'] },
   'character-counter': { en: ['Character counter', 'Characters, words and limits as you type.'], pl: ['Licznik znaków', 'Znaki ze spacjami i bez, słowa i limity na bieżąco.'] },
+  converter: { en: ['File converter', 'MOV to GIF, MP4 to MP3, HEIC to JPG and more. Nothing is uploaded.'], pl: ['Konwerter plików', 'MOV na GIF, MP4 na MP3, HEIC na JPG i więcej. Bez wysyłania plików.'] },
   base64: { en: ['Base64', 'Encode and decode both ways as you type. Text and files.'], pl: ['Base64', 'Koduj i dekoduj w obie strony na bieżąco. Tekst i pliki.'] }
 };
 const art = {
@@ -24,6 +27,7 @@ const art = {
   hub: `<div class="tiles">${['white-screen', 'jwt-decoder', 'character-counter', 'base64'].map((id) => `<i>${iconSvg(id, 180)}</i>`).join('')}</div>`,
   'jwt-decoder': `<div class="card mono"><b style="color:#ff6b9a">eyJhbGciOiJSUzI1NiIsImtpZCI6IjEifQ</b>.<b style="color:#b197fc">eyJzdWIiOiJ1c2VyXzhmM2EyYyIsImV4cCI6MTc5NTUxMDAwMH0</b>.<b style="color:#38d9c0">kX9…Q2w</b><div class="ok">✓ Signature verified · RS256</div></div>`,
   'character-counter': `<div class="card"><div class="big">1 800</div><div class="lbl">characters</div><div class="bars"><i style="width:64%"></i><i style="width:92%;background:#ca8a04"></i><i style="width:100%;background:#dc2626"></i></div></div>`,
+  converter: `<div class="chips"><b>MOV</b><i>→</i><b class="to">GIF</b><b>HEIC</b><i>→</i><b class="to">JPG</b><b>MP4</b><i>→</i><b class="to">MP3</b></div>`,
   base64: `<div class="card two"><div>Zażółć 🦊</div><div class="arr">→</div><div class="mono">WmHFvMOzxYLEhyDwn6aK</div></div>`
 };
 const og = (id, lang) => `<!doctype html><html><head><meta charset="utf-8"><style>
@@ -36,7 +40,7 @@ h1{font-size:96px;line-height:1;letter-spacing:-.035em;margin:28px 0 24px;font-w
 .dust{position:absolute;border-radius:50%;background:rgba(0,0,0,.28)}.d1{width:6px;height:6px;left:90px;top:70px}.d2{width:4px;height:4px;left:300px;top:180px}.d3{width:5px;height:5px;left:360px;top:60px}
 .swipe{position:absolute;left:150px;top:110px;width:180px;height:70px;border-radius:50%;background:radial-gradient(closest-side,rgba(150,160,180,.18),transparent);transform:rotate(-12deg)}
 .neck{width:60px;height:56px;background:#24272c}.foot{width:220px;height:14px;border-radius:8px;background:#24272c}
-.tiles{display:grid;grid-template-columns:180px 180px;gap:24px}.tiles i{display:block;width:180px;height:180px}.tiles svg{display:block;border-radius:40px}.card{width:470px;padding:32px;border-radius:24px;background:#1b1e22;border:1px solid #2c3036;font-size:26px;line-height:1.45;color:#ecebe7}.mono{font-family:'SF Mono',Menlo,monospace;word-break:break-all}.card.mono{font-size:24px}.ok{margin-top:22px;font:700 24px -apple-system,sans-serif;color:#4ade80}.big{font:800 120px/1 -apple-system,sans-serif;letter-spacing:-.04em}.lbl{color:#9b9a94;font-size:28px;margin:8px 0 26px}.bars i{display:block;height:14px;border-radius:9px;background:#15803d;margin-top:14px}.two{display:flex;flex-direction:column;gap:14px;font-size:34px}.two .arr{color:#9b9a94}.two .mono{color:#ff9f6b;font-size:30px}
+.tiles{display:grid;grid-template-columns:180px 180px;gap:24px}.tiles i{display:block;width:180px;height:180px}.tiles svg{display:block;border-radius:40px}.card{width:470px;padding:32px;border-radius:24px;background:#1b1e22;border:1px solid #2c3036;font-size:26px;line-height:1.45;color:#ecebe7}.mono{font-family:'SF Mono',Menlo,monospace;word-break:break-all}.card.mono{font-size:24px}.ok{margin-top:22px;font:700 24px -apple-system,sans-serif;color:#4ade80}.big{font:800 120px/1 -apple-system,sans-serif;letter-spacing:-.04em}.lbl{color:#9b9a94;font-size:28px;margin:8px 0 26px}.bars i{display:block;height:14px;border-radius:9px;background:#15803d;margin-top:14px}.chips{display:grid;grid-template-columns:auto auto auto;gap:22px 18px;align-items:center}.chips b{font:800 54px -apple-system,sans-serif;padding:14px 26px;border-radius:22px;background:#1b1e22;border:1px solid #2c3036;text-align:center}.chips b.to{background:#0e7490;border-color:#0e7490}.chips i{font-style:normal;font-size:44px;color:#9b9a94}.two{display:flex;flex-direction:column;gap:14px;font-size:34px}.two .arr{color:#9b9a94}.two .mono{color:#ff9f6b;font-size:30px}
 </style></head><body><div class="l"><div class="k">ciunkos.com / <b>${lang === 'pl' ? 'darmowe narzędzia' : 'free tools'}</b></div><h1>${COPY[id][lang][0]}</h1><p>${COPY[id][lang][1]}</p><div class="by"><img src="${face}">Przemysław Zalewski</div></div><div class="r">${lang === 'pl' ? art[id].replace('>characters<', '>znaków<').replace('Signature verified', 'Podpis zgodny') : art[id]}</div></body></html>`;
 
 const browser = await chromium.launch();
@@ -48,6 +52,16 @@ for (const [id, svg] of Object.entries(ICONS)) for (const size of id === 'hub' ?
   await page.screenshot({ path: `public/free-tools/icons/${id}-${size}.png` });
 }
 await page.setViewportSize({ width: 1200, height: 630 });
+for (const p of PAIRS) {
+  const id = `pair-${p.from}-${p.to}`;
+  for (const lang of LANGS) {
+    const f = fmtName(p.from, lang), t = fmtName(p.to, lang);
+    COPY[id] = { [lang]: [lang === 'pl' ? `${f} na ${t}` : `${f} to ${t}`, lang === 'pl' ? 'Konwersja w Twojej przeglądarce. Nic nie jest wysyłane.' : 'Converted in your browser. Nothing is uploaded.'] };
+    art[id] = `<div class="chips" style="grid-template-columns:auto auto auto"><b>${f}</b><i>→</i><b class="to">${t}</b></div>`;
+    await page.setContent(og(id, lang));
+    await page.screenshot({ path: `public/free-tools/og/${id}-${lang}.jpg`, type: 'jpeg', quality: 86 });
+  }
+}
 for (const id of ['hub', ...LIVE]) for (const lang of LANGS) {
   await page.setContent(og(id, lang));
   await page.screenshot({ path: `public/free-tools/og/${id}-${lang}.jpg`, type: 'jpeg', quality: 88 });

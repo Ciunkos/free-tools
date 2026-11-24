@@ -1,0 +1,68 @@
+/* File converter: the first screen is one calm drop surface (White screen simplicity), the rest is the usual page. */
+.drop { position: relative; min-height: 100svh; display: flex; flex-direction: column; background: radial-gradient(120% 80% at 50% 0%, #eef6f8 0%, var(--bg) 60%); color: var(--ink) }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .drop { background: radial-gradient(120% 80% at 50% 0%, #0f2a30 0%, var(--bg) 60%) } }
+.drop-top { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: max(14px, env(safe-area-inset-top)) 20px 0; font-size: .86rem }
+.drop-top a { color: var(--muted); text-decoration: none; padding: 6px 10px; border-radius: 999px } .drop-top a:hover { color: var(--ink); background: var(--soft) }
+.drop-center { flex: 1; width: 100%; max-width: 760px; margin: 0 auto; padding: 24px 20px 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 18px }
+.pill { display: inline-flex; align-items: center; gap: 10px; padding: 6px 6px 6px 16px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); font: 700 1rem var(--sans) }
+.pill-arrow { color: var(--muted) }
+.pill-select { appearance: none; -webkit-appearance: none; border: 0; border-radius: 999px; padding: 8px 34px 8px 14px; background: #0e7490 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='white' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 12px center; color: #fff; font: 700 1rem var(--sans); cursor: pointer }
+.pill-select:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px }
+.drop-h { margin: 6px 0 0; font-size: .95rem; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--muted) }
+.drop-big { margin: 0; font: 750 clamp(1.9rem, 1.2rem + 3vw, 3.2rem)/1.08 var(--display); letter-spacing: -.03em; color: var(--ink); text-wrap: balance; max-width: 16ch }
+.drop.has-jobs .drop-big { display: none }
+.drop.has-jobs .drop-center { justify-content: flex-start; padding-top: 8vh }
+.drop-idle, .drop-pick { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 8px }
+.drop-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 60px; padding: 0 30px; border: 0; border-radius: 999px; background: var(--accent); color: var(--accent-fg); font: 700 1.1rem var(--sans); text-decoration: none; cursor: pointer; box-shadow: 0 10px 30px rgba(17, 19, 22, .18); transition: transform .15s var(--ease), box-shadow .25s var(--ease) }
+.drop-btn:hover { box-shadow: 0 14px 36px rgba(17, 19, 22, .24); text-decoration: none } .drop-btn:active { transform: scale(.98) }
+input.sr:focus-visible + .drop-btn, .drop-btn:focus-visible, label.drop-btn:has(+ input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 3px }
+.drop-btn-sm { min-height: 48px; padding: 0 22px; font-size: 1rem; box-shadow: none }
+.drop-hint { margin: 0; color: var(--muted); font-size: .92rem }
+.drop-pick p { margin: 0; font-weight: 650 }
+.drop-targets { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center }
+.drop-more { position: absolute; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%); color: var(--muted); font-size: .88rem; text-decoration: none; white-space: nowrap }
+body.dragging .drop { box-shadow: inset 0 0 0 4px #0e7490 } body.dragging .drop-center { pointer-events: none }
+body.dragging .drop-big::after { content: " ⬇" }
+
+/* Jobs: one card per file */
+.jobs { list-style: none; margin: 0; padding: 0; width: 100%; display: grid; gap: 12px; text-align: left }
+.jobs:empty { display: none }
+.job { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: var(--shadow) }
+.job-preview:empty { display: none }
+.job-preview img { display: block; max-width: 132px; max-height: 96px; border-radius: 8px; background: repeating-conic-gradient(#e5e5e5 0 25%, #fff 0 50%) 0 0 / 12px 12px }
+.job-preview video { display: block; width: 160px; max-height: 110px; border-radius: 8px; background: #000 }
+.job-preview audio { width: 220px }
+.job-main { min-width: 0 }
+.job-name { margin: 0; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.job-status { margin: 2px 0 0; color: var(--ink2); font-size: .92rem; font-variant-numeric: tabular-nums }
+.job .bar { height: 6px; margin-top: 8px; border-radius: 99px; background: var(--soft); overflow: hidden }
+.job .bar i { display: block; height: 100%; width: 0; background: #0e7490; border-radius: inherit; transition: width .3s var(--ease) }
+.job[data-state="done"] .bar, .job[data-state="error"] .bar, .job[data-state="canceled"] .bar { display: none }
+.job[data-state="error"] .job-status { color: #b42318 }
+.job-note { margin: 6px 0 0; font-size: .85rem; color: var(--muted) } .job-note:empty { display: none }
+.job .drop-btn { min-height: 52px; padding: 0 24px; font-size: 1.02rem }
+.link-btn { border: 0; background: none; color: var(--link); font: 600 .95rem var(--sans); cursor: pointer; padding: 8px 6px; text-decoration: underline; text-underline-offset: .2em }
+@media (max-width: 640px) {
+  .job { grid-template-columns: 1fr; text-align: center } .job-preview { justify-self: center } .job .drop-btn { width: 100% }
+  .job-preview audio { width: 100% }
+}
+.drop-after { display: flex; gap: 14px; align-items: center; justify-content: center; flex-wrap: wrap }
+
+/* Options: tucked away */
+.opts { width: 100%; max-width: 560px }
+.opts summary { cursor: pointer; color: var(--muted); font-weight: 600; list-style: none; padding: 6px }
+.opts summary::-webkit-details-marker { display: none }
+.opts summary::after { content: " ▾" } .opts[open] summary::after { content: " ▴" }
+.opts-in { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 18px; margin-top: 8px; padding: 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface) }
+.opts-in label { display: flex; flex-direction: column; gap: 4px; font-size: .82rem; color: var(--muted); text-align: left }
+.opts-in select, .opts-in input { min-height: 40px; padding: 0 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink); font: 600 .95rem var(--sans) }
+
+/* Below the fold */
+.steps { list-style: none; counter-reset: s; margin: 24px 0; padding: 0; display: grid; gap: 4px }
+.steps li { counter-increment: s; position: relative; padding: 14px 0 10px 56px; border-top: 1px solid var(--line) }
+.steps li::before { content: counter(s); position: absolute; left: 0; top: 14px; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--line); font: 700 .95rem/1 var(--display); color: var(--ink) }
+.steps h3 { margin: 0 0 4px } .steps p { color: var(--ink2); margin: 0 0 6px }
+.pair-links { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px }
+.pair-links a { display: inline-block; padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); text-decoration: none; font-weight: 600; font-size: .92rem }
+.pair-links a:hover { border-color: var(--muted) }
+.pair-links a.arrow-link { border: 0; background: none; color: var(--link) }

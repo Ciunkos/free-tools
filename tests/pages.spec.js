@@ -10,7 +10,9 @@ const PAGES = [
   ['/free-tools/white-screen', 'White screen', 'WebApplication'], ['/darmowe-narzedzia/bialy-ekran', 'Biały ekran', 'WebApplication'],
   ['/free-tools/jwt-decoder', 'JWT decoder', 'WebApplication'], ['/darmowe-narzedzia/dekoder-jwt', 'Dekoder JWT', 'WebApplication'],
   ['/free-tools/character-counter', 'Character counter', 'WebApplication'], ['/darmowe-narzedzia/licznik-znakow', 'Licznik znaków', 'WebApplication'],
-  ['/free-tools/base64-encode-decode', 'Base64', 'WebApplication'], ['/darmowe-narzedzia/base64-koduj-dekoduj', 'Base64', 'WebApplication']
+  ['/free-tools/base64-encode-decode', 'Base64', 'WebApplication'], ['/darmowe-narzedzia/base64-koduj-dekoduj', 'Base64', 'WebApplication'],
+  ['/free-tools/file-converter', 'File converter', 'WebApplication'], ['/darmowe-narzedzia/konwerter-plikow', 'Konwerter plików', 'WebApplication'],
+  ['/free-tools/mov-to-gif', 'MOV to GIF converter', 'HowTo'], ['/darmowe-narzedzia/heic-na-jpg', 'Konwerter HEIC na JPG', 'HowTo'], ['/free-tools/video-to-mp3', 'Video to MP3 converter', 'HowTo']
 ];
 
 for (const [path, h1, type] of PAGES) {
@@ -42,7 +44,7 @@ for (const [path, h1, type] of PAGES) {
 
 test('hub links every live tool and never links a tool that is not live', async ({ page }) => {
   await page.goto('/free-tools');
-  for (const slug of ['white-screen', 'jwt-decoder', 'character-counter', 'base64-encode-decode']) await expect(page.locator(`a.tool-card[href="/free-tools/${slug}"]`)).toHaveCount(1);
+  for (const slug of ['white-screen', 'jwt-decoder', 'character-counter', 'base64-encode-decode', 'file-converter']) await expect(page.locator(`a.tool-card[href="/free-tools/${slug}"]`)).toHaveCount(1);
   await expect(page.locator('.tool-card.is-soon a, a.tool-card.is-soon')).toHaveCount(0);
 });
 

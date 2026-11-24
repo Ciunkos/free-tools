@@ -83,12 +83,12 @@ function contentHeader(lang, crumbs, alt) {
  * @param {{en:string,pl:string}} o.path  page paths without the leading slash
  * @param {object} o.C  copy: title, metaDescription, h1, lead, crumb, faq?, przemo?, ogImage?
  */
-export function shell({ id, layout, lang, wersja, path, C, ld = [], surface = '', tool = '', body = '', styles = [], scripts = [], updated, headExtra = '', themeColor = '#ffffff' }) {
+export function shell({ id, layout, lang, wersja, path, C, ld = [], surface = '', tool = '', body = '', styles = [], scripts = [], updated, headExtra = '', themeColor = '#ffffff', ogId = id }) {
   const U = UI[lang], adres = BAZA + '/' + path[lang];
   const crumbs = [[U.home, BAZA + '/'], [HUB_NAME[lang], '/' + HUB[lang]]];
   if (id !== 'hub') crumbs.push([C.crumb, '/' + path[lang]]);
   const crumbLd = { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: crumbs.map(([n, u], i) => ({ '@type': 'ListItem', position: i + 1, name: n, item: u.startsWith('http') ? u : BAZA + u })) };
-  const og = BAZA + ASSETY + '/og/' + id + '-' + lang + '.jpg?v=' + wersja.slice(-7);
+  const og = BAZA + ASSETY + '/og/' + ogId + '-' + lang + '.jpg?v=' + wersja.slice(-7);
   const v = '?v=' + wersja;
   const intro = `<h1>${esc(C.h1)}</h1>
   <p class="ft-lead">${inline(C.lead)}</p>
@@ -133,11 +133,11 @@ ${[...ld, crumbLd].map((x) => `<script type="application/ld+json">${jsonLd(x)}</
 </head>
 <body>
 <a class="skip" href="#content">${esc(U.skip)}</a>
-${layout === 'surface' ? surface : ''}
+${layout === 'surface' || layout === 'drop' ? surface : ''}
 <main id="content" class="ft-main" tabindex="-1">
 ${contentHeader(lang, crumbs, path)}
 <article class="ft-article">
-  ${layout === 'workbench' ? `<h1>${esc(C.h1)}</h1>\n  <p class="ft-lead">${inline(C.lead)}</p>\n  ${tool}\n  ${C.przemo ? przemoSays(lang, C.przemo) : ''}` : intro}
+  ${layout === 'drop' ? `<p class="ft-lead">${inline(C.lead)}</p>\n  ${C.przemo ? przemoSays(lang, C.przemo) : ''}` : layout === 'workbench' ? `<h1>${esc(C.h1)}</h1>\n  <p class="ft-lead">${inline(C.lead)}</p>\n  ${tool}\n  ${C.przemo ? przemoSays(lang, C.przemo) : ''}` : intro}
   ${body}
   ${C.faq ? faqHtml(lang, C.faq) : ''}
 </article>
