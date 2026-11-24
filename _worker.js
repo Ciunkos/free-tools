@@ -3,7 +3,7 @@
    and /free-tools/llms.txt. No API beyond health: every tool runs in the browser and nothing the user does leaves it
    (except anonymous analytics without any tool input). Pattern: ~/business-tools/_worker.js. */
 import { STRONY, APEX, ASSETY, API, HUB, LANGS, innyLang } from './src/meta.mjs';
-import { WERSJA } from './src/wersja.mjs';
+import { WERSJA, ROZMIARY } from './src/wersja.mjs';
 import { POSTHOG_SDK } from './src/shared/posthog-sdk.mjs'; // copy from ciunkos.com/src/utils (check-posthog-copies.mjs)
 
 const OGONKI = /(?:[)\]}>.,;:!?'"„”»…]|%29|%5D|%7D|%3E|%2E|%2C|%3B|%3A|%21|%3F|%27|%22)+\/?$/i;
@@ -13,8 +13,8 @@ function phConfigJson(env) {
 }
 class SetPostHogConfig { constructor(env) { this.value = phConfigJson(env); } element(el) { el.setAttribute('data-posthog-config', this.value); } }
 
-/* No inline scripts (CSP without hashes); inline styles stay. YouTube only as a privacy-enhanced frame, loaded on click. */
-const CSP = ["default-src 'self'", "script-src 'self'", "connect-src 'self'", "style-src 'self' 'unsafe-inline'", "img-src 'self' data: blob: https://ciunkos.com", "font-src 'self'", "frame-src https://www.youtube-nocookie.com", "manifest-src 'self'", "base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'", "object-src 'none'"].join('; ');
+/* No inline scripts (CSP without hashes); inline styles stay. No frames: every file, the video too, comes from this site. */
+const CSP = ["default-src 'self'", "script-src 'self'", "connect-src 'self'", "style-src 'self' 'unsafe-inline'", "img-src 'self' data: blob: https://ciunkos.com", "font-src 'self'", "media-src 'self'", "frame-src 'none'", "manifest-src 'self'", "base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'", "object-src 'none'"].join('; ');
 
 const json = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } });
 
@@ -35,10 +35,38 @@ function naglowki(res, sciezka, { wersjonowany = false, html = false, testHost =
     h.set('Content-Security-Policy', CSP);
     if (twin && lang) h.set('Link', `<https://${APEX}${twin}>; rel="alternate"; hreflang="${innyLang(lang)}"`);
     h.delete('ETag');
-  } else if (/^(webp|png|jpg|svg|ico|woff2?)$/i.test(ext)) h.set('Cache-Control', wersjonowany ? 'public, max-age=31536000, immutable' : 'public, max-age=604800');
+  } else if (/^(webp|png|jpg|svg|ico|woff2?|mp4)$/i.test(ext)) h.set('Cache-Control', wersjonowany ? 'public, max-age=31536000, immutable' : 'public, max-age=604800');
   else if (/^(js|mjs|css)$/i.test(ext)) h.set('Cache-Control', wersjonowany ? 'public, max-age=31536000, immutable' : 'no-cache');
   else if (TYPY[ext]) { h.set('Cache-Control', 'public, max-age=3600'); h.set('Content-Type', TYPY[ext]); }
   return new Response(res.body, { status: res.status, headers: h });
+}
+
+/* Byte ranges for video. Safari (iPhone above all) plays MP4 only from a server that answers Range with 206.
+   The assets binding returns the whole file, so the Worker streams just the asked slice, without buffering it. */
+const RANGE = /^bytes=(\d*)-(\d*)$/;
+function zakres(res, request, znany) {
+  const r = (request.headers.get('Range') || '').trim().match(RANGE);
+  const total = Number(res.headers.get('Content-Length')) || znany;
+  if (res.status !== 200 || !r || !res.body || !Number.isFinite(total) || total <= 0 || (!r[1] && !r[2])) return res;
+  let start = r[1] ? Number(r[1]) : Math.max(0, total - Number(r[2]));
+  let end = r[1] && r[2] ? Math.min(Number(r[2]), total - 1) : total - 1;
+  if (start >= total || start > end) return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${total}`, 'Accept-Ranges': 'bytes' } });
+  let pos = 0;
+  const want = end - start + 1;
+  let sent = 0;
+  const { readable, writable } = new TransformStream({
+    transform(chunk, ctl) {
+      const a = pos, b = pos + chunk.byteLength; pos = b;
+      if (b <= start || sent >= want) return;
+      const part = chunk.subarray(Math.max(0, start - a), Math.min(chunk.byteLength, start - a + want));
+      sent += part.byteLength;
+      ctl.enqueue(part);
+    }
+  });
+  res.body.pipeTo(writable).catch(() => {});
+  const h = new Headers(res.headers);
+  h.set('Content-Range', `bytes ${start}-${end}/${total}`); h.set('Content-Length', String(want)); h.set('Accept-Ranges', 'bytes');
+  return new Response(readable, { status: 206, headers: h });
 }
 
 function strona404(lang, testHost) {
@@ -89,7 +117,10 @@ export default {
       const urlA = new URL(wej); urlA.pathname = '/a' + p.slice(ASSETY.length); urlA.search = '';
       const asset = await env.ASSETS.fetch(new Request(urlA.toString(), request));
       if (asset.status === 404) return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'no-store' } });
-      return naglowki(asset, p, { wersjonowany: wej.searchParams.has('v'), testHost });
+      const wyj = naglowki(asset, p, { wersjonowany: wej.searchParams.has('v'), testHost });
+      if (!/\.mp4$/i.test(p)) return wyj;
+      wyj.headers.set('Accept-Ranges', 'bytes');
+      return zakres(wyj, request, ROZMIARY[p.slice(ASSETY.length)]);
     }
 
     for (const s of STRONY) for (const lang of LANGS) {

@@ -13,7 +13,8 @@ const PAGES = [
 for (const [path, h1, type] of PAGES) {
   test(`${path}: renders, CSP, one LD graph, axe 0, no overflow, no console errors`, async ({ page }) => {
     const errors = [];
-    page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+    /* WebKit's own media-control icons log 'Button failed to load' in Playwright's build; not our page. */
+    page.on('console', (m) => { if (m.type() === 'error' && !/^Button failed to load, iconName/.test(m.text())) errors.push(m.text()); });
     page.on('pageerror', (e) => errors.push(e.message));
     const r = await page.goto(path);
     expect(r.status()).toBe(200);
@@ -60,14 +61,10 @@ test('white screen: the first viewport is pure #FFFFFF once the controls fade', 
 
 test('white screen: the button enters full screen and the button or Esc leaves it', async ({ page, isMobile }) => {
   await page.goto('/free-tools/white-screen');
+  test.skip(isMobile, 'the iPhone project (WebKit) has no element full screen; the iPhone tests cover its video and covering modes');
   await page.locator('#fs-btn').click();
-  if (isMobile) {
-    /* Emulated iPhone still has the Fullscreen API in Chromium; either real or pseudo full screen is fine. */
-    await expect(page.locator('#stage')).toHaveClass(/is-fs|is-pseudo/);
-  } else {
-    await expect.poll(() => page.evaluate(() => document.fullscreenElement?.id)).toBe('stage');
-    await expect(page.locator('#fs-btn .fs-label')).toHaveText('Exit full screen');
-  }
+  await expect.poll(() => page.evaluate(() => document.fullscreenElement?.id)).toBe('stage');
+  await expect(page.locator('#fs-btn .fs-label')).toHaveText('Exit full screen');
   await page.mouse.move(10, 10); await page.mouse.move(20, 20);
   await page.locator('#fs-btn').click();
   await expect.poll(() => page.evaluate(() => !!document.fullscreenElement)).toBe(false);
@@ -76,7 +73,7 @@ test('white screen: the button enters full screen and the button or Esc leaves i
 });
 
 test('white screen: the iPhone fallback covers the screen when there is no Fullscreen API', async ({ page }) => {
-  await page.addInitScript(() => { Element.prototype.requestFullscreen = undefined; Element.prototype.webkitRequestFullscreen = undefined; });
+  await page.addInitScript(() => { Element.prototype.requestFullscreen = undefined; Element.prototype.webkitRequestFullscreen = undefined; HTMLVideoElement.prototype.webkitEnterFullscreen = undefined; });
   await page.goto('/free-tools/white-screen');
   await page.locator('#fs-btn').click();
   await expect(page.locator('#stage')).toHaveClass(/is-pseudo/);
@@ -124,17 +121,48 @@ test('white screen: download gives a PNG of the chosen size', async ({ page, isM
   await expect(page.locator('#dl-btn')).toBeDisabled();
 });
 
-test('white screen: the video frame loads only after pressing play', async ({ page }) => {
-  const yt = [];
-  page.on('request', (r) => { if (/youtube/.test(r.url())) yt.push(r.url()); });
-  await page.route(/youtube-nocookie\.com/, (r) => r.fulfill({ contentType: 'text/html', body: '<html></html>' }));
+test('white screen: our own video, no external frames, streams with range requests and downloads', async ({ page, request }) => {
+  const external = [];
+  page.on('request', (r) => { const u = new URL(r.url()); if (/^https?:$/.test(u.protocol) && !['127.0.0.1', 'localhost'].includes(u.hostname)) external.push(r.url()); });
   await page.goto('/free-tools/white-screen');
-  await page.locator('#video').scrollIntoViewIfNeeded();
-  await page.waitForTimeout(300);
-  expect(yt).toEqual([]);
-  await page.locator('.video-opt[data-yt="_2H0gwg1pA8"]').click();
-  await page.locator('#video-play').click();
-  await expect(page.locator('#video-box iframe')).toHaveAttribute('src', /embed\/_2H0gwg1pA8\?autoplay=1&loop=1&playlist=_2H0gwg1pA8/);
+  expect(await page.content()).not.toMatch(/youtube|<iframe/i);
+  const src = await page.locator('#ws-video').getAttribute('src');
+  expect(src).toBe('/free-tools/a/video/white-screen-10-hours-1080p.mp4');
+  const r = await request.get(src, { headers: { Range: 'bytes=0-1023' } });
+  expect(r.status()).toBe(206);
+  expect(r.headers()['content-type']).toBe('video/mp4');
+  expect((await r.body()).length).toBe(1024);
+  expect(r.headers()['content-range']).toMatch(/^bytes 0-1023\/\d+$/);
+  const total = Number(r.headers()['content-range'].split('/')[1]);
+  const tail = await request.get(src, { headers: { Range: 'bytes=-100' } });
+  expect(tail.status()).toBe(206);
+  expect(tail.headers()['content-range']).toBe(`bytes ${total - 100}-${total - 1}/${total}`);
+  expect((await tail.body()).length).toBe(100);
+  expect((await request.get(src, { headers: { Range: `bytes=${total}-` } })).status()).toBe(416);
+  for (const id of ['1080p', '4k']) await expect(page.locator(`a[download][data-size="${id}"]`)).toHaveAttribute('href', `/free-tools/a/video/white-screen-10-hours-${id}.mp4`);
+  const ld = JSON.parse(await page.locator('script[type="application/ld+json"]').textContent())['@graph'];
+  const v = ld.find((n) => n['@type'] === 'VideoObject');
+  expect(v.contentUrl).toBe('https://ciunkos.com/free-tools/a/video/white-screen-10-hours-1080p.mp4');
+  expect(v.duration).toBe('PT10H');
+  expect(external.filter((u) => !/\/vendor\/posthog\//.test(u))).toEqual([]);
+});
+
+test('white screen: with no element full screen (iPhone), pure white opens the video full screen', async ({ page }) => {
+  await page.addInitScript(() => {
+    Element.prototype.requestFullscreen = undefined; Element.prototype.webkitRequestFullscreen = undefined;
+    window.__videoFs = 0; HTMLVideoElement.prototype.webkitEnterFullscreen = function () { window.__videoFs++; };
+    HTMLMediaElement.prototype.play = function () { return Promise.resolve(); };
+  });
+  await page.goto('/free-tools/white-screen');
+  await expect(page.locator('#ws-video')).toHaveAttribute('preload', 'metadata');
+  await page.locator('#fs-btn').click();
+  expect(await page.evaluate(() => window.__videoFs)).toBe(1);
+  await expect(page.locator('#stage')).not.toHaveClass(/is-pseudo/);
+  /* Other shades cannot come from the white video, so they use the covering mode. */
+  await page.locator('.tint[data-tint="warm"]').click();
+  await page.locator('#fs-btn').click();
+  await expect(page.locator('#stage')).toHaveClass(/is-pseudo/);
+  expect(await page.evaluate(() => window.__videoFs)).toBe(1);
 });
 
 test('trailing slash and unknown pages', async ({ request }) => {

@@ -21,6 +21,7 @@ async function enter(how) {
   try {
     if (stage.requestFullscreen) await stage.requestFullscreen({ navigationUI: 'hide' });
     else if (stage.webkitRequestFullscreen) stage.webkitRequestFullscreen();
+    else if (stage.dataset.tint === 'white' && videoFullscreen(how)) return;
     else pseudo(true, true);
   } catch { pseudo(true, false); }
   track('fullscreen_entered', { how, mode: nativeFs ? 'native' : 'pseudo', tint: stage.dataset.tint });
@@ -175,29 +176,31 @@ if (form) {
   sync();
 }
 
-/* ---------- Video: a facade until play, then a privacy-enhanced YouTube frame that loops ---------- */
-const box = $('#video-box');
-if (box) {
-  const opts = [...document.querySelectorAll('.video-opt')];
-  const poster = $('#video-play');
-  const len = $('#video-len');
-  function play() {
-    const id = box.dataset.yt;
-    const f = document.createElement('iframe');
-    f.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?autoplay=1&loop=1&playlist=${encodeURIComponent(id)}&rel=0&playsinline=1`;
-    f.title = opts.find((o) => o.dataset.yt === id)?.dataset.name || 'White screen video';
-    f.allow = 'autoplay; encrypted-media; fullscreen; picture-in-picture';
-    f.allowFullscreen = true;
-    f.referrerPolicy = 'strict-origin-when-cross-origin';
-    box.replaceChildren(f);
-    track('video_played', { video: id });
-  }
-  poster.addEventListener('click', play);
-  opts.forEach((o) => o.addEventListener('click', () => {
-    opts.forEach((x) => x.setAttribute('aria-checked', String(x === o)));
-    const playing = !!box.querySelector('iframe');
-    box.dataset.yt = o.dataset.yt;
-    if (playing) play();
-    else { len.textContent = o.dataset.len; poster.setAttribute('aria-label', poster.getAttribute('aria-label').replace(/:.*/, ': ' + o.dataset.name)); }
-  }));
+/* ---------- Our own 10-hour white video: in-page player, its own full screen, downloads ---------- */
+const video = $('#ws-video');
+if (video) {
+  const box = $('#video-box');
+  const sync = () => box.classList.toggle('is-playing', !video.paused);
+  video.addEventListener('play', () => { sync(); track('video_played', { how: 'player' }); });
+  video.addEventListener('pause', sync);
+  $('#video-fs').addEventListener('click', () => videoFullscreen('video-button'));
+}
+/** Full screen through the video element. On iPhone this is the only true full screen Safari allows. */
+function videoFullscreen(how) {
+  if (!video) return false;
+  video.muted = true;
+  const p = video.play(); if (p && p.catch) p.catch(() => {});
+  try {
+    if (video.requestFullscreen) video.requestFullscreen().catch(() => video.webkitEnterFullscreen && video.webkitEnterFullscreen());
+    else if (video.webkitEnterFullscreen) video.webkitEnterFullscreen();
+    else return false;
+  } catch { return false; }
+  wake(true);
+  track('fullscreen_entered', { how, mode: 'video' });
+  return true;
+}
+if (video) {
+  video.addEventListener('webkitendfullscreen', () => { video.pause(); wake(false); });
+  /* iPhone: get the video ready so the Full screen button can open it at once, inside the tap. */
+  if (!nativeFs && video.webkitEnterFullscreen) video.preload = 'metadata';
 }

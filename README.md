@@ -32,7 +32,7 @@ tools/<id>/*.mjs|.css   client code, copied to public/a/t/<id>/ by the build
 ## Commands
 
 ```sh
-npm run build        # pages, sitemap, llms.txt, lint (CSP, titles, JSON-LD, "Przemo says")
+npm run build        # pages, sitemap, llms.txt, lint (CSP, titles, JSON-LD, "Przemo says"); encodes the white videos if missing (needs ffmpeg)
 npm run test:unit    # node --test
 npm test             # build + Playwright (desktop and iPhone, axe)
 npm run dev          # wrangler dev on :8798

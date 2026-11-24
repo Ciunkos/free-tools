@@ -55,3 +55,20 @@ test('presets are unique, within limits, and file names say the size', () => {
   assert.equal(fileName(3840, 2160), 'white-3840x2160.png');
   assert.ok(PRESETS.some((p) => p.prebuilt));
 });
+
+test('our 10-hour videos decode to pure white (needs ffmpeg; the build checks new files too)', async (t) => {
+  const { execFileSync } = await import('node:child_process');
+  const { existsSync } = await import('node:fs');
+  const { VIDEOS, DIR } = await import('../scripts/videos.mjs');
+  try { execFileSync('ffmpeg', ['-version'], { stdio: 'ignore' }); } catch { return t.skip('ffmpeg not installed'); }
+  for (const v of VIDEOS) {
+    const f = `${DIR}/${v.file}`;
+    if (!existsSync(f)) { t.diagnostic('not built yet: ' + f); continue; }
+    const probe = execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration:stream=width,height,color_range', '-of', 'json', f], { encoding: 'utf8' });
+    const j = JSON.parse(probe);
+    assert.equal(Math.round(Number(j.format.duration)), 36000);
+    assert.equal(j.streams[0].width, v.w); assert.equal(j.streams[0].color_range, 'tv');
+    const rgb = execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-ss', '35000', '-i', f, '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'], { maxBuffer: 1 << 26 });
+    assert.ok(rgb.length === v.w * v.h * 3 && rgb.every((b) => b === 255), v.file + ' is not pure white');
+  }
+});

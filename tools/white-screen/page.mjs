@@ -13,11 +13,14 @@ export const TINTS = [
   { id: 'dim', hex: '#c8c8c8', en: 'Dimmed', pl: 'Przygaszona' }
 ];
 
-export const VIDEOS = [
-  { id: 'FAJCBikqOws', name: '10 HOURS PURE WHITE SCREEN 4K 3840x2160', seconds: 36611, iso: 'PT10H10M11S', uploaded: '2025-11-25T01:00:21-08:00', res: '4K' },
-  { id: '_2H0gwg1pA8', name: 'WHITE Screen in HD - 10 Hours', seconds: 36000, iso: 'PT10H', uploaded: '2021-10-07T22:18:52-07:00', res: 'HD' }
-];
-const hms = (s) => [Math.floor(s / 3600), Math.floor(s / 60) % 60, s % 60].map((n, i) => (i ? String(n).padStart(2, '0') : n)).join(':');
+/* Our own 10-hour pure white video (scripts/videos.mjs). Played in the page, downloadable, and on iPhone it is the
+   only way to true full screen (Safari lets only videos go full screen). */
+export { VIDEOS } from '../../scripts/videos.mjs';
+import { VIDEOS } from '../../scripts/videos.mjs';
+const VIDEO_PUBLISHED = '2026-11-24';
+const mb = (b) => (b / 1048576).toFixed(1);
+import { statSync } from 'node:fs';
+const videoFiles = () => VIDEOS.map((v) => ({ ...v, bytes: statSync('public/a/video/' + v.file).size }));
 
 const C = {
   en: {
@@ -60,30 +63,32 @@ const C = {
     dlGroups: { screen: 'Screens', device: 'Phone and tablet', print: 'Print', social: 'Social' },
     dlReady: 'Ready-made files', dlReadyIntro: 'The most common sizes, as plain files you can link to or save with a right-click:',
     dlMade: 'Saved', dlErr: 'Enter a width and a height from 1 to 16,384 pixels.',
-    vidH: '10 hours of white screen (video)',
-    vidIntro: 'A web page cannot go full screen everywhere. On a smart TV, a Chromecast, or inside apps a long video is the easier way to get a white screen, and the player keeps the screen awake by itself. Pick one and press play; it loops when it ends.',
-    vidPlay: 'Play', vidBy: 'by', vidNote: 'Videos are hosted on YouTube and load only when you press play (privacy-enhanced mode). Video compression and TV picture modes can make the white very slightly off; for exact #FFFFFF use the page above.',
+    vidH: 'White screen video: 10 hours, free MP4',
+    vidIntro: 'Some screens cannot open a web page in full screen: smart TVs without a browser, digital photo frames, projectors with a USB port, presentation and video-editing apps. A video works on all of them. This is my own 10-hour pure white video. Play it here (it loops), or download the MP4 and play it from a USB stick, a TV app or any video player.',
+    vidName: 'White screen, 10 hours (pure white video)', vidFs: 'Play full screen', vidDl: 'Download MP4',
+    vidNote: 'Encoded at one frame per second, so ten hours of white weigh only a few megabytes. The white is exact: video white (Y 235), which players show as RGB 255, 255, 255. Use it anywhere, no credit needed (CC0).',
+    vidDesc: 'A 10-hour video of a pure white screen (RGB 255, 255, 255), for cleaning screens, testing displays, or as a light on TVs and projectors without a web browser. Free MP4 in 1080p and 4K, CC0.',
     cmpH: 'White screen page, white image or white video?',
-    cmpHead: ['', 'This page', 'White image (PNG)', '10-hour video'],
+    cmpHead: ['', 'This page', 'White image (PNG)', 'White video (MP4)'],
     cmp: [
-      ['Gets you full screen', 'One click or F', 'In a photo viewer', 'In the video player'],
-      ['Exact #FFFFFF', 'Yes', 'Yes', 'Almost'],
-      ['Works offline', 'Once loaded', 'Yes', 'No'],
-      ['On a TV', 'TV browser or casting', 'USB stick or photo app', 'YouTube app'],
+      ['Gets you full screen', 'One click or F', 'In a photo viewer', 'In any video player'],
+      ['Exact #FFFFFF', 'Yes', 'Yes', 'Yes'],
+      ['Works offline', 'Once loaded', 'Yes', 'Once downloaded'],
+      ['On a TV', 'TV browser or casting', 'USB stick or photo app', 'USB stick or TV media player'],
       ['Keeps the screen awake', 'Yes, in most browsers', 'No', 'Yes']
     ],
     faq: [
       { q: 'How do I make my whole screen white?', a: 'Open this page and press **Full screen** (or the **F** key, or click anywhere on the white area). The browser hides its tabs and bars and the whole display turns white. Press **Esc** to go back.' },
       { q: 'How do I exit the white screen?', a: 'Press **Esc** on a keyboard, or double-click. On a phone or tablet, tap the screen once to bring back the controls, then tap **Exit full screen**.' },
-      { q: 'Does it work on iPhone?', a: 'Yes, with one catch. Safari on iPhone does not let web pages go truly full screen, so the page fills the screen and hides its controls, while Safari keeps a thin bar. For edge-to-edge white, tap **Share**, then **Add to Home Screen**, and open the white screen from your home screen. iPad and Android phones support real full screen.' },
-      { q: 'How do I put a white screen on my TV?', a: 'Open this page in the TV’s web browser, cast the browser tab from your phone or laptop, or connect a laptop with HDMI and press F. Without a browser, play one of the 10-hour white screen videos in the YouTube app.' },
+      { q: 'Does it work on iPhone?', a: 'Yes. Safari on iPhone lets only videos go truly full screen, so on an iPhone the **Full screen** button plays this page’s own white video full screen, edge to edge. With the warm, cool or dimmed shade the page fills the screen instead and Safari keeps a thin bar; for those, tap **Share**, then **Add to Home Screen**, and open the white screen from there. iPad and Android phones support real full screen for every shade.' },
+      { q: 'How do I put a white screen on my TV?', a: 'Open this page in the TV’s web browser, cast the browser tab from your phone or laptop, or connect a laptop with HDMI and press F. Without a browser, download the 10-hour white MP4 below and play it from a USB stick or the TV’s media player.' },
       { q: 'Can a white screen damage my display?', a: 'No. A few minutes of white is ordinary use for LCD and OLED alike. Burn-in on OLED comes from the same picture, such as a logo or a taskbar, staying on screen for hundreds of hours. A plain white field has no shape to burn in. If you use an OLED as a light for hours every day, lower the brightness a little.' },
       { q: 'Should I clean my screen while it is on?', a: 'Clean it while it is off, then turn it on and check it on white. A dark panel hides nothing while you wipe, it is cooler so the liquid dries without streaks, and you will not click anything by accident.' },
       { q: 'Why does my white look yellow, blue or not bright enough?', a: 'A web page cannot change your screen’s brightness or colour. Turn brightness up and switch off auto-brightness, Night Shift, True Tone, Night Light or Eye Comfort mode for the most neutral white. The **Warm** and **Cool** shades are there on purpose, for lighting.' },
       { q: 'Will my screen go to sleep?', a: 'In full screen the page asks the browser to keep the display awake (the Screen Wake Lock API, supported by Chrome, Edge, Safari and Firefox). If yours does not support it, change the sleep setting or use the 10-hour video.' },
-      { q: 'Is it really pure white?', a: 'Yes. The page and the PNG files are exactly **#FFFFFF**, that is RGB 255, 255, 255 in sRGB. The PNGs carry an sRGB tag so apps do not reinterpret the colour.' },
+      { q: 'Is it really pure white?', a: 'Yes. The page and the PNG files are exactly **#FFFFFF**, that is RGB 255, 255, 255 in sRGB, and the video decodes to the same white. The PNGs carry an sRGB tag so apps do not reinterpret the colour.' },
       { q: 'Are there keyboard shortcuts?', a: '**F** toggles full screen, **Esc** exits, **1** to **4** switch between pure, warm, cool and dimmed white, and a double-click toggles full screen too.' },
-      { q: 'Does it work offline?', a: 'Once the page has loaded, full screen, the shades and the image downloads keep working without internet. Only the videos need a connection.' },
+      { q: 'Does it work offline?', a: 'Once the page has loaded, full screen, the shades and the image downloads keep working without internet. The video streams from this site; download the MP4 to watch it offline.' },
       { q: 'Is it free?', a: 'Yes. No account, no ads, no paywall. I made it for myself and keep it up for everyone.' }
     ]
   },
@@ -127,30 +132,32 @@ const C = {
     dlGroups: { screen: 'Ekrany', device: 'Telefon i tablet', print: 'Druk', social: 'Media społecznościowe' },
     dlReady: 'Gotowe pliki', dlReadyIntro: 'Najczęstsze rozmiary jako zwykłe pliki, które możesz podlinkować albo zapisać prawym przyciskiem:',
     dlMade: 'Zapisano', dlErr: 'Podaj szerokość i wysokość od 1 do 16 384 pikseli.',
-    vidH: '10 godzin białego ekranu (wideo)',
-    vidIntro: 'Strona internetowa nie wszędzie przejdzie na pełny ekran. Na smart TV, Chromecaście albo w aplikacjach łatwiej o biały ekran z długiego filmu, a odtwarzacz sam pilnuje, żeby ekran nie zgasł. Wybierz film i naciśnij play; po końcu zaczyna się od nowa.',
-    vidPlay: 'Odtwórz', vidBy: 'kanał', vidNote: 'Filmy są na YouTube i ładują się dopiero po naciśnięciu play (tryb rozszerzonej prywatności). Kompresja wideo i tryby obrazu w telewizorze mogą minimalnie zmienić biel; dokładne #FFFFFF daje strona powyżej.',
+    vidH: 'Biały ekran jako wideo: 10 godzin, darmowe MP4',
+    vidIntro: 'Nie każdy ekran otworzy stronę na pełnym ekranie: telewizory bez przeglądarki, cyfrowe ramki na zdjęcia, projektory z portem USB, programy do prezentacji i montażu. Wideo działa wszędzie. To moje własne, 10-godzinne, idealnie białe wideo. Odtwórz je tutaj (zapętla się) albo pobierz MP4 i włącz z pendrive’a, w aplikacji telewizora lub w dowolnym odtwarzaczu.',
+    vidName: 'Biały ekran, 10 godzin (idealnie białe wideo)', vidFs: 'Odtwórz na pełnym ekranie', vidDl: 'Pobierz MP4',
+    vidNote: 'Zakodowane z jedną klatką na sekundę, więc dziesięć godzin bieli waży tylko kilka megabajtów. Biel jest dokładna: biel wideo (Y 235), którą odtwarzacze pokazują jako RGB 255, 255, 255. Używaj go, gdzie chcesz, bez podawania autora (CC0).',
+    vidDesc: 'Dziesięciogodzinne wideo z idealnie białym ekranem (RGB 255, 255, 255) do czyszczenia ekranu, testowania wyświetlacza albo jako światło na telewizorze i projektorze bez przeglądarki. Darmowe MP4 w 1080p i 4K, CC0.',
     cmpH: 'Biała strona, biały obraz czy białe wideo?',
-    cmpHead: ['', 'Ta strona', 'Biały obraz (PNG)', 'Wideo 10 godzin'],
+    cmpHead: ['', 'Ta strona', 'Biały obraz (PNG)', 'Białe wideo (MP4)'],
     cmp: [
-      ['Pełny ekran', 'Jedno kliknięcie albo F', 'W przeglądarce zdjęć', 'W odtwarzaczu'],
-      ['Dokładne #FFFFFF', 'Tak', 'Tak', 'Prawie'],
-      ['Działa bez internetu', 'Po załadowaniu', 'Tak', 'Nie'],
-      ['Na telewizorze', 'Przeglądarka TV albo przesyłanie', 'Pendrive albo aplikacja zdjęć', 'Aplikacja YouTube'],
+      ['Pełny ekran', 'Jedno kliknięcie albo F', 'W przeglądarce zdjęć', 'W każdym odtwarzaczu'],
+      ['Dokładne #FFFFFF', 'Tak', 'Tak', 'Tak'],
+      ['Działa bez internetu', 'Po załadowaniu', 'Tak', 'Po pobraniu'],
+      ['Na telewizorze', 'Przeglądarka TV albo przesyłanie', 'Pendrive albo aplikacja zdjęć', 'Pendrive albo odtwarzacz w telewizorze'],
       ['Ekran nie gaśnie', 'Tak, w większości przeglądarek', 'Nie', 'Tak']
     ],
     faq: [
       { q: 'Jak zrobić cały ekran na biało?', a: 'Otwórz tę stronę i naciśnij **Pełny ekran** (albo klawisz **F**, albo kliknij w dowolnym miejscu białego pola). Przeglądarka schowa karty i paski, a cały ekran zrobi się biały. **Esc** wraca.' },
       { q: 'Jak wyjść z białego ekranu?', a: 'Naciśnij **Esc** na klawiaturze albo kliknij dwukrotnie. Na telefonie lub tablecie dotknij ekranu, żeby pokazać przyciski, i stuknij **Zamknij pełny ekran**.' },
-      { q: 'Czy działa na iPhonie?', a: 'Tak, z jednym zastrzeżeniem. Safari na iPhonie nie pozwala stronom przejść na prawdziwy pełny ekran, więc strona wypełnia ekran i chowa przyciski, a Safari zostawia cienki pasek. Dla bieli od krawędzi do krawędzi stuknij **Udostępnij**, potem **Do ekranu początkowego**, i otwórz biały ekran z ekranu początkowego. iPad i telefony z Androidem obsługują prawdziwy pełny ekran.' },
-      { q: 'Jak włączyć biały ekran na telewizorze?', a: 'Otwórz tę stronę w przeglądarce telewizora, prześlij kartę przeglądarki z telefonu albo laptopa, albo podłącz laptop przez HDMI i naciśnij F. Bez przeglądarki włącz w aplikacji YouTube jeden z 10-godzinnych filmów z białym ekranem.' },
+      { q: 'Czy działa na iPhonie?', a: 'Tak. Safari na iPhonie pozwala przejść na prawdziwy pełny ekran tylko filmom, więc na iPhonie przycisk **Pełny ekran** odtwarza na pełnym ekranie własne białe wideo tej strony, od krawędzi do krawędzi. Przy ciepłym, chłodnym albo przygaszonym odcieniu strona wypełnia ekran, a Safari zostawia cienki pasek; wtedy stuknij **Udostępnij**, potem **Do ekranu początkowego**, i otwórz biały ekran stamtąd. iPad i telefony z Androidem obsługują prawdziwy pełny ekran dla każdego odcienia.' },
+      { q: 'Jak włączyć biały ekran na telewizorze?', a: 'Otwórz tę stronę w przeglądarce telewizora, prześlij kartę przeglądarki z telefonu albo laptopa, albo podłącz laptop przez HDMI i naciśnij F. Bez przeglądarki pobierz poniżej 10-godzinne białe MP4 i odtwórz je z pendrive’a albo w odtwarzaczu telewizora.' },
       { q: 'Czy biały ekran może uszkodzić wyświetlacz?', a: 'Nie. Kilka minut bieli to zwykłe użycie, zarówno dla LCD, jak i OLED. Wypalenie na OLED-ach bierze się z tego samego obrazu, na przykład logo albo paska zadań, wyświetlanego przez setki godzin. Jednolita biel nie ma kształtu, który mógłby się wypalić. Jeśli codziennie przez kilka godzin używasz OLED-a jako lampy, zmniejsz trochę jasność.' },
       { q: 'Czy czyścić ekran, gdy jest włączony?', a: 'Czyść, gdy jest wyłączony, a potem włącz go i sprawdź na bieli. Wyłączona matryca jest chłodniejsza, więc płyn schnie bez smug, i nic przypadkiem nie klikniesz.' },
       { q: 'Dlaczego biel jest żółtawa, niebieskawa albo za ciemna?', a: 'Strona nie może zmienić jasności ani kolorów ekranu. Podkręć jasność i wyłącz automatyczną jasność, Night Shift, True Tone, Światło nocne albo tryb ochrony oczu, a biel będzie najbardziej neutralna. Odcienie **Ciepła** i **Chłodna** są tu celowo, do oświetlenia.' },
       { q: 'Czy ekran nie zgaśnie?', a: 'Na pełnym ekranie strona prosi przeglądarkę, żeby nie wygaszała ekranu (Screen Wake Lock API, obsługują je Chrome, Edge, Safari i Firefox). Jeśli Twoja przeglądarka tego nie potrafi, zmień czas wygaszania albo użyj 10-godzinnego filmu.' },
-      { q: 'Czy to naprawdę czysta biel?', a: 'Tak. Strona i pliki PNG mają dokładnie **#FFFFFF**, czyli RGB 255, 255, 255 w sRGB. Pliki PNG mają znacznik sRGB, więc programy nie przeliczają koloru.' },
+      { q: 'Czy to naprawdę czysta biel?', a: 'Tak. Strona i pliki PNG mają dokładnie **#FFFFFF**, czyli RGB 255, 255, 255 w sRGB, a wideo dekoduje się do tej samej bieli. Pliki PNG mają znacznik sRGB, więc programy nie przeliczają koloru.' },
       { q: 'Są skróty klawiszowe?', a: '**F** włącza i wyłącza pełny ekran, **Esc** wychodzi, **1** do **4** przełączają czystą, ciepłą, chłodną i przygaszoną biel, a podwójne kliknięcie też przełącza pełny ekran.' },
-      { q: 'Czy działa bez internetu?', a: 'Po załadowaniu strony pełny ekran, odcienie i pobieranie obrazów działają bez internetu. Tylko filmy potrzebują połączenia.' },
+      { q: 'Czy działa bez internetu?', a: 'Po załadowaniu strony pełny ekran, odcienie i pobieranie obrazów działają bez internetu. Wideo płynie z tej strony; pobierz MP4, żeby oglądać je bez internetu.' },
       { q: 'Czy to jest darmowe?', a: 'Tak. Bez konta, bez reklam, bez płatnej wersji. Zrobiłem to dla siebie i trzymam dla wszystkich.' }
     ]
   }
@@ -158,6 +165,7 @@ const C = {
 export const COPY = C;
 
 const ICON_FS = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" class="i-enter"><path d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" class="i-exit"><path d="M9 4v4a1 1 0 0 1-1 1H4M20 9h-4a1 1 0 0 1-1-1V4M15 20v-4a1 1 0 0 1 1-1h4M4 15h4a1 1 0 0 1 1 1v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ICON_PLAY = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>';
 const ICON_DL = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 function surface(lang, T, paths) {
@@ -178,6 +186,7 @@ function surface(lang, T, paths) {
 }
 
 function body(lang, T) {
+  const VIDEOS = videoFiles();
   const L = (v) => (typeof v === 'object' ? v[lang] : v);
   const groups = [...new Set(PRESETS.map((p) => p.group))];
   const prebuilt = PRESETS.filter((p) => p.prebuilt);
@@ -214,10 +223,11 @@ function body(lang, T) {
 
 <section aria-labelledby="video"><h2 id="video">${esc(T.vidH)}</h2>
   <p>${esc(T.vidIntro)}</p>
-  <div class="video" id="video-box" data-yt="${VIDEOS[0].id}">
-    <button type="button" class="video-poster" id="video-play" aria-label="${esc(T.vidPlay)}: ${esc(VIDEOS[0].name)}"><span class="video-play" aria-hidden="true"><svg viewBox="0 0 24 24" width="30" height="30"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></span></button><span class="video-len" id="video-len" aria-hidden="true">${hms(VIDEOS[0].seconds)}</span>
+  <div class="video" id="video-box"><video id="ws-video" src="${ASSETY}/video/${VIDEOS[0].file}" poster="${ASSETY}/img/${fileName(1920, 1080)}" width="1920" height="1080" preload="none" controls loop muted playsinline disablepictureinpicture title="${esc(T.vidName)}"></video><span class="video-len" aria-hidden="true">10:00:00</span></div>
+  <div class="video-actions">
+    <button type="button" class="btn btn-primary btn-lg" id="video-fs" data-track="video_fullscreen">${ICON_PLAY}<span>${esc(T.vidFs)}</span></button>
+    ${VIDEOS.map((v) => `<a class="btn" href="${ASSETY}/video/${v.file}" download data-track="video_downloaded" data-size="${v.id}">${ICON_DL}<span>${esc(T.vidDl)} ${v.id === '4k' ? '4K' : v.id} <small>(${mb(v.bytes)} MB)</small></span></a>`).join('\n    ')}
   </div>
-  <div class="video-pick" role="radiogroup" aria-label="${esc(T.vidH)}">${VIDEOS.map((v, i) => `<button type="button" role="radio" class="video-opt" aria-checked="${i === 0}" data-yt="${v.id}" data-len="${hms(v.seconds)}" data-name="${esc(v.name)}"><strong>${esc(v.res)} · ${hms(v.seconds)}</strong><span>${esc(v.name)} · YouTube</span></button>`).join('')}</div>
   <p class="small muted">${esc(T.vidNote)}</p>
 </section>
 
@@ -234,13 +244,16 @@ export function render({ lang, wersja, updated }) {
   const path = { en: sciezka(ID, 'en'), pl: sciezka(ID, 'pl') };
   const url = BAZA + '/' + path[lang];
   const ld = [
-    { '@context': 'https://schema.org', '@type': 'WebPage', '@id': url, url, name: T.title, description: T.metaDescription, inLanguage: lang, mainEntity: { '@id': url + '#app' }, about: { '@type': 'Thing', name: lang === 'pl' ? 'Biały ekran' : 'White screen' }, primaryImageOfPage: { '@id': url + '#image-fhd' }, video: VIDEOS.map((v) => ({ '@id': url + '#video-' + v.id })) },
+    { '@context': 'https://schema.org', '@type': 'WebPage', '@id': url, url, name: T.title, description: T.metaDescription, inLanguage: lang, mainEntity: { '@id': url + '#app' }, about: { '@type': 'Thing', name: lang === 'pl' ? 'Biały ekran' : 'White screen' }, primaryImageOfPage: { '@id': url + '#image-fhd' }, video: { '@id': url + '#video' } },
     webApp({ id: ID, lang, url, C: T }),
     { '@context': 'https://schema.org', '@type': 'HowTo', '@id': url + '#how', name: T.howH, description: T.howIntro, totalTime: T.howTotal, inLanguage: lang,
       supply: (lang === 'pl' ? ['Dwie ściereczki z mikrofibry', 'Chusteczki do ekranów albo woda destylowana'] : ['Two microfibre cloths', 'Screen wipes or distilled water']).map((name) => ({ '@type': 'HowToSupply', name })),
       tool: { '@type': 'HowToTool', name: TOOLS[ID].name[lang], url },
       step: T.steps.map(([name, text], i) => ({ '@type': 'HowToStep', position: i + 1, name, text, url: url + '#how' })) },
-    ...VIDEOS.map((v) => ({ '@context': 'https://schema.org', '@type': 'VideoObject', '@id': url + '#video-' + v.id, name: v.name, description: (lang === 'pl' ? 'Biały ekran na ' : 'A pure white screen for ') + hms(v.seconds) + (lang === 'pl' ? ' (wideo na YouTube).' : ' (YouTube video).'), thumbnailUrl: `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`, uploadDate: v.uploaded, duration: v.iso, embedUrl: `https://www.youtube-nocookie.com/embed/${v.id}`, contentUrl: `https://www.youtube.com/watch?v=${v.id}`, isFamilyFriendly: true })),
+    { '@context': 'https://schema.org', '@type': 'VideoObject', '@id': url + '#video', name: T.vidName, description: T.vidDesc, inLanguage: lang,
+      thumbnailUrl: [BAZA + ASSETY + '/og/white-screen-' + lang + '.jpg', BAZA + ASSETY + '/img/' + fileName(1920, 1080)], uploadDate: VIDEO_PUBLISHED, duration: 'PT10H',
+      contentUrl: BAZA + ASSETY + '/video/' + VIDEOS[0].file, encodingFormat: 'video/mp4', width: 1920, height: 1080, isFamilyFriendly: true, isAccessibleForFree: true,
+      creator: { '@id': PERSON_ID }, license: 'https://creativecommons.org/publicdomain/zero/1.0/', url: url + '#video' },
     ...PRESETS.filter((p) => p.prebuilt).map((p) => ({ '@context': 'https://schema.org', '@type': 'ImageObject', '@id': url + '#image-' + p.id, contentUrl: BAZA + ASSETY + '/img/' + fileName(p.w, p.h), name: (lang === 'pl' ? 'Biały obraz ' : 'White image ') + `${p.w}×${p.h}`, description: lang === 'pl' ? `Idealnie biały PNG ${p.w}×${p.h} pikseli (#FFFFFF), do pobrania za darmo.` : `A pure white ${p.w}×${p.h} pixel PNG (#FFFFFF), free to download.`, width: { '@type': 'QuantitativeValue', value: p.w, unitCode: 'E37' }, height: { '@type': 'QuantitativeValue', value: p.h, unitCode: 'E37' }, encodingFormat: 'image/png', creator: { '@id': PERSON_ID }, creditText: 'Przemysław Zalewski', copyrightNotice: 'Public domain (CC0)', license: 'https://creativecommons.org/publicdomain/zero/1.0/', acquireLicensePage: url + '#download' })),
     faqLd(T.faq)
   ];

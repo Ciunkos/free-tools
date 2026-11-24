@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "node build.mjs",
-    "dev": "npm run build && wrangler dev --port 8798",
+    "dev": "npm run build && wrangler dev --port 8842",
     "predeploy": "node ../hamulec/scripts/check-deploy.mjs && npm run build && npm run test:unit",
     "deploy": "wrangler deploy $([ -f .prod.secrets ] && echo --secrets-file .prod.secrets) && sleep 5 && sh tests/prod.sh",
     "postdeploy": "node scripts/indexnow.mjs",

@@ -109,18 +109,14 @@ html.lock, html.lock body { overflow: hidden; overscroll-behavior: none }
 .ready a:hover .ready-frame { transform: translateY(-2px) }
 .ready-cap { font-size: .88rem } .ready-cap strong { color: var(--ink); display: block }
 
-/* Video (lite facade, the iframe loads on click) */
+/* Video: our own 10-hour white MP4 */
 .video { position: relative; aspect-ratio: 16 / 9; margin: 24px 0 12px; border-radius: 18px; overflow: hidden; background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow) }
-.video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0 }
-.video-poster { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; padding: 0; cursor: pointer; background: radial-gradient(120% 90% at 50% 40%, #fff 60%, #f3f3f0 100%); display: grid; place-items: center }
-.video-play { width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center; background: #111316; color: #fff; padding-left: 4px; box-shadow: 0 10px 30px rgba(17, 19, 22, .25); transition: transform .2s var(--ease) }
-.video-poster:hover .video-play { transform: scale(1.06) }
-.video-poster:focus-visible { outline: 3px solid var(--focus); outline-offset: -6px; border-radius: 18px }
-.video-len { pointer-events: none; position: absolute; left: 14px; bottom: 14px; padding: 4px 8px; border-radius: 6px; background: rgba(17, 19, 22, .82); color: #fff; font: 600 .82rem var(--mono) }
-.video-pick { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; margin-bottom: 12px }
-.video-opt { text-align: left; display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink2); font: inherit; font-size: .88rem; cursor: pointer }
-.video-opt strong { color: var(--ink); font-size: .95rem }
-.video-opt[aria-checked="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink) }
+.video video { position: absolute; inset: 0; width: 100%; height: 100%; display: block; background: #fff; object-fit: cover }
+.video-len { position: absolute; left: 14px; top: 14px; padding: 4px 8px; border-radius: 6px; background: rgba(17, 19, 22, .82); color: #fff; font: 600 .82rem var(--mono); pointer-events: none; transition: opacity .3s }
+.video.is-playing .video-len { opacity: 0 }
+.video-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 12px }
+.video-actions small { font-weight: 500; opacity: .7 }
+@media (max-width: 520px) { .video-actions .btn { width: 100% } }
 
 /* Comparison */
 .cmp { width: 100%; border-collapse: collapse; font-size: .95rem; min-width: 560px }
