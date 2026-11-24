@@ -7,7 +7,10 @@ import AxeBuilder from '@axe-core/playwright';
 
 const PAGES = [
   ['/free-tools', 'Free tools', 'CollectionPage'], ['/darmowe-narzedzia', 'Darmowe narzędzia', 'CollectionPage'],
-  ['/free-tools/white-screen', 'White screen', 'WebApplication'], ['/darmowe-narzedzia/bialy-ekran', 'Biały ekran', 'WebApplication']
+  ['/free-tools/white-screen', 'White screen', 'WebApplication'], ['/darmowe-narzedzia/bialy-ekran', 'Biały ekran', 'WebApplication'],
+  ['/free-tools/jwt-decoder', 'JWT decoder', 'WebApplication'], ['/darmowe-narzedzia/dekoder-jwt', 'Dekoder JWT', 'WebApplication'],
+  ['/free-tools/character-counter', 'Character counter', 'WebApplication'], ['/darmowe-narzedzia/licznik-znakow', 'Licznik znaków', 'WebApplication'],
+  ['/free-tools/base64-encode-decode', 'Base64', 'WebApplication'], ['/darmowe-narzedzia/base64-koduj-dekoduj', 'Base64', 'WebApplication']
 ];
 
 for (const [path, h1, type] of PAGES) {
@@ -39,7 +42,7 @@ for (const [path, h1, type] of PAGES) {
 
 test('hub links every live tool and never links a tool that is not live', async ({ page }) => {
   await page.goto('/free-tools');
-  await expect(page.locator('a.tool-card[href="/free-tools/white-screen"]')).toHaveCount(1);
+  for (const slug of ['white-screen', 'jwt-decoder', 'character-counter', 'base64-encode-decode']) await expect(page.locator(`a.tool-card[href="/free-tools/${slug}"]`)).toHaveCount(1);
   await expect(page.locator('.tool-card.is-soon a, a.tool-card.is-soon')).toHaveCount(0);
 });
 
@@ -127,7 +130,7 @@ test('white screen: our own video, no external frames, streams with range reques
   await page.goto('/free-tools/white-screen');
   expect(await page.content()).not.toMatch(/youtube|<iframe/i);
   const src = await page.locator('#ws-video').getAttribute('src');
-  expect(src).toBe('/free-tools/a/video/white-screen-10-hours-1080p.mp4');
+  expect(src).toBe('/free-tools/video/white-screen-10-hours-1080p.mp4');
   const r = await request.get(src, { headers: { Range: 'bytes=0-1023' } });
   expect(r.status()).toBe(206);
   expect(r.headers()['content-type']).toBe('video/mp4');
@@ -139,10 +142,10 @@ test('white screen: our own video, no external frames, streams with range reques
   expect(tail.headers()['content-range']).toBe(`bytes ${total - 100}-${total - 1}/${total}`);
   expect((await tail.body()).length).toBe(100);
   expect((await request.get(src, { headers: { Range: `bytes=${total}-` } })).status()).toBe(416);
-  for (const id of ['1080p', '4k']) await expect(page.locator(`a[download][data-size="${id}"]`)).toHaveAttribute('href', `/free-tools/a/video/white-screen-10-hours-${id}.mp4`);
+  for (const id of ['1080p', '4k']) await expect(page.locator(`a[download][data-size="${id}"]`)).toHaveAttribute('href', `/free-tools/video/white-screen-10-hours-${id}.mp4`);
   const ld = JSON.parse(await page.locator('script[type="application/ld+json"]').textContent())['@graph'];
   const v = ld.find((n) => n['@type'] === 'VideoObject');
-  expect(v.contentUrl).toBe('https://ciunkos.com/free-tools/a/video/white-screen-10-hours-1080p.mp4');
+  expect(v.contentUrl).toBe('https://ciunkos.com/free-tools/video/white-screen-10-hours-1080p.mp4');
   expect(v.duration).toBe('PT10H');
   expect(external.filter((u) => !/\/vendor\/posthog\//.test(u))).toEqual([]);
 });
@@ -172,4 +175,102 @@ test('trailing slash and unknown pages', async ({ request }) => {
   const sm = await (await request.get('/free-tools/sitemap.xml')).text();
   expect(sm).toContain('<loc>https://ciunkos.com/darmowe-narzedzia/bialy-ekran</loc>');
   expect(sm).toContain('image:loc');
+});
+
+/* ---------- JWT decoder ---------- */
+test('JWT: the sample decodes, shows a valid status, and verifies with its secret but not another', async ({ page }) => {
+  const requests = [];
+  page.on('request', (r) => requests.push(r.url()));
+  await page.goto('/free-tools/jwt-decoder');
+  await page.locator('#jwt-sample').click();
+  await expect(page.locator('#jwt-status')).toContainText('Valid');
+  await expect(page.locator('#jwt-header')).toContainText('"HS256"');
+  await expect(page.locator('#jwt-payload')).toContainText('Jan Kowalski');
+  await expect(page.locator('#jwt-claims')).toContainText('expires');
+  await page.locator('#jwt-verify summary').click();
+  await page.locator('#jwt-key').fill('ciunkos-sample-secret');
+  await expect(page.locator('#jwt-vres')).toHaveText('Signature verified');
+  await page.locator('#jwt-key').fill('wrong');
+  await expect(page.locator('#jwt-vres')).toContainText('does not match');
+  expect(requests.filter((u) => /jwt|eyJ/.test(new URL(u).search + new URL(u).hash))).toEqual([]);
+  expect(page.url()).not.toContain('eyJ');
+});
+
+test('JWT: expired tokens, Bearer prefix, broken input and Polish messages', async ({ page }) => {
+  const b = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+  const expired = `${b({ alg: 'none' })}.${b({ sub: 'x', exp: 1000 })}.`;
+  await page.goto('/darmowe-narzedzia/dekoder-jwt');
+  await page.locator('#jwt-in').fill('Bearer ' + expired);
+  await expect(page.locator('#jwt-status')).toContainText('Wygasł');
+  await expect(page.locator('#jwt-warn')).toContainText('none');
+  await page.locator('#jwt-in').fill('abc.def');
+  await expect(page.locator('#jwt-error')).toHaveText('JWT ma 3 części oddzielone kropkami; ten ma 2.');
+  await expect(page.locator('#jwt-out')).toBeHidden();
+});
+
+/* ---------- Character counter ---------- */
+test('Counter: graphemes, words, limits and SMS update as you type', async ({ page }) => {
+  await page.goto('/free-tools/character-counter');
+  await page.locator('#cc-in').fill('Zażółć gęślą jaźń 👍🇵🇱');
+  await expect(page.locator('#cc-chars')).toHaveText('20');
+  await expect(page.locator('#cc-words')).toHaveText('3');
+  await expect(page.locator('#cc-limits li[data-id="x"] .lim-n b')).toHaveText('22');
+  await expect(page.locator('#cc-sms')).toContainText('UCS-2');
+  await expect(page.locator('#cc-sms-note')).toContainText('ż');
+  await page.locator('#cc-in').fill('a'.repeat(300));
+  await expect(page.locator('#cc-limits li[data-id="x"]')).toHaveClass(/over/);
+  await expect(page.locator('#cc-pages')).toHaveText('0.17');
+});
+
+test('Counter: text is kept only when asked, and cleared when unticked', async ({ page }) => {
+  await page.goto('/darmowe-narzedzia/licznik-znakow');
+  await page.locator('#cc-in').fill('Ala ma kota.');
+  await page.reload();
+  await expect(page.locator('#cc-in')).toHaveValue('');
+  await page.locator('#cc-in').fill('Ala ma kota.');
+  await page.locator('#cc-remember').check();
+  await page.reload();
+  await expect(page.locator('#cc-in')).toHaveValue('Ala ma kota.');
+  await expect(page.locator('#cc-pages')).toHaveText('0,01');
+  await page.locator('#cc-remember').uncheck();
+  await page.reload();
+  await expect(page.locator('#cc-in')).toHaveValue('');
+});
+
+/* ---------- Base64 ---------- */
+test('Base64: encodes and decodes both ways, keeps Polish letters and emoji, options apply', async ({ page }) => {
+  await page.goto('/free-tools/base64-encode-decode');
+  await page.locator('#b64-text').fill('Zażółć 🦊');
+  await expect(page.locator('#b64-code')).toHaveValue(Buffer.from('Zażółć 🦊').toString('base64'));
+  await page.locator('#b64-url').check();
+  await page.locator('#b64-pad').uncheck();
+  await expect(page.locator('#b64-code')).toHaveValue(Buffer.from('Zażółć 🦊').toString('base64url'));
+  await page.locator('#b64-code').fill('aGVsbG8gxbzDs8WCdw');
+  await expect(page.locator('#b64-text')).toHaveValue('hello żółw');
+  await expect(page.locator('#b64-dir')).toHaveClass(/decode/);
+  await page.locator('#b64-code').fill('aGV$');
+  await expect(page.locator('#b64-error')).toContainText('“$” at character 4');
+});
+
+test('Base64: a file encodes locally, binary decodes offer a preview and a download', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'file pickers and downloads are checked on desktop');
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==', 'base64');
+  await page.goto('/free-tools/base64-encode-decode');
+  await page.locator('#b64-file').setInputFiles({ name: 'dot.png', mimeType: 'image/png', buffer: png });
+  await expect(page.locator('#b64-code')).toHaveValue(png.toString('base64'));
+  await expect(page.locator('#b64-preview')).toBeVisible();
+  await expect(page.locator('#b64-datauri')).toBeVisible();
+  await page.locator('[data-clear="code"]').click();
+  await page.locator('#b64-code').fill(png.toString('base64'));
+  await expect(page.locator('#b64-bin-text')).toContainText('image/png');
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.locator('#b64-download').click()]);
+  expect(dl.suggestedFilename()).toBe('decoded.png');
+});
+
+test('static files revalidate with 304 on reload instead of disappearing', async ({ request }) => {
+  const first = await request.get('/free-tools/app.css');
+  expect(first.status()).toBe(200);
+  const etag = first.headers()['etag'], lm = first.headers()['last-modified'];
+  const again = await request.get('/free-tools/app.css', { headers: { ...(etag ? { 'If-None-Match': etag } : {}), ...(lm ? { 'If-Modified-Since': lm } : {}), 'Cache-Control': 'max-age=0' } });
+  expect([200, 304]).toContain(again.status());
 });

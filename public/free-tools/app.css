@@ -1,5 +1,5 @@
 /* app.css: shared layout and tokens for every free tool and the hub. Light and dark via prefers-color-scheme.
-   Tools add their own file (public/a/t/<id>/*.css). Content column ~70ch, 8px grid, system type. */
+   Tools add their own file (/free-tools/<tool>/*.css). Content column ~70ch, 8px grid, system type. */
 :root {
   --bg: #f6f6f3; --surface: #ffffff; --ink: #111316; --ink2: #33373d; --muted: #5d636b; --line: #e3e3de;
   --soft: #ecece7; --accent: #111316; --accent-fg: #ffffff; --link: #1f4fd1; --focus: #2f6bff; --bubble: #eef3fb; --bubble-ink: #2a5fb0;
@@ -25,6 +25,10 @@ kbd { font: 600 .82em var(--mono); padding: .1em .45em; border: 1px solid var(--
 .skip { position: absolute; left: 12px; top: -60px; z-index: 50; padding: 10px 14px; border-radius: 10px; background: var(--ink); color: var(--bg); font-weight: 600 }
 .skip:focus { top: 12px }
 .small { font-size: .875rem } .muted { color: var(--muted) }
+/* `hidden` always wins over component display rules. */
+[hidden] { display: none !important }
+.sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0 }
+.sr:focus-visible + small, label:has(+ .sr:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px }
 
 /* Content */
 .ft-main { outline: none; position: relative; background: var(--bg) }
@@ -82,7 +86,8 @@ p { margin: 0 0 16px }
 .tool-card:hover { border-color: var(--muted); box-shadow: var(--shadow); transform: translateY(-2px) }
 .tool-card strong { color: var(--ink); font-size: 1.05rem }
 .tool-card span { font-size: .95rem; line-height: 1.5 }
-.tool-swatch { width: 44px; height: 30px; border-radius: 7px; background: var(--sw); border: 1px solid var(--line); box-shadow: inset 0 0 0 3px var(--surface), inset 0 0 0 4px var(--line); margin-bottom: 6px }
+.tool-icon { display: block; width: 40px; height: 40px; margin-bottom: 8px; border-radius: 10px; box-shadow: 0 1px 2px rgba(17, 19, 22, .12) }
+.tool-icon svg { display: block; width: 40px; height: 40px }
 .tool-open { margin-top: auto; padding-top: 8px; color: var(--link); font-weight: 600 }
 .tool-card.is-soon { background: transparent; border-style: dashed }
 .tool-card.is-soon:hover { transform: none; box-shadow: none; border-color: var(--line) }
@@ -101,3 +106,55 @@ p { margin: 0 0 16px }
 /* The shared footer sits flush under the author card. */
 .ft-author + .cf-foot, main + .cf-foot { margin-top: 0 }
 .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface) }
+
+/* ---------- Workbench: the panel text tools share (JWT, counter, Base64) ---------- */
+.wb { margin: 28px 0 8px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); box-shadow: var(--shadow); overflow: hidden }
+.wb-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 14px 12px 18px; border-bottom: 1px solid var(--line) }
+.wb-label { font-weight: 700; font-size: .95rem; color: var(--ink) }
+.wb-actions { display: flex; gap: 6px; flex-wrap: wrap }
+.btn-sm { min-height: 36px; padding: 0 14px; font-size: .88rem; gap: 6px }
+.wb-area { display: block; width: 100%; min-height: 220px; padding: 16px 18px; border: 0; resize: vertical; background: transparent; color: var(--ink); font: 1rem/1.6 var(--sans); outline: none }
+.wb-area.mono { font: .95rem/1.6 var(--mono); word-break: break-all }
+.wb-area::placeholder { color: var(--muted); opacity: .8 }
+.wb:focus-within { border-color: color-mix(in srgb, var(--focus) 55%, var(--line)); box-shadow: var(--shadow), 0 0 0 3px color-mix(in srgb, var(--focus) 18%, transparent) }
+.wb-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 18px; border-top: 1px solid var(--line); background: var(--soft); font-size: .85rem; color: var(--muted) }
+.private { display: inline-flex; align-items: center; gap: 6px }
+.private svg { flex: none }
+.wb-error { margin: 0; padding: 12px 18px; border-top: 1px solid var(--line); color: #b42318; font-weight: 600; font-size: .92rem }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .wb-error { color: #ff8a7a } }
+.stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1px; background: var(--line); border-top: 1px solid var(--line) }
+.stat { background: var(--surface); padding: 14px 18px }
+.stat b { display: block; font: 750 1.6rem/1.1 var(--display); letter-spacing: -.02em; color: var(--ink); font-variant-numeric: tabular-nums }
+.stat span { font-size: .82rem; color: var(--muted) }
+.stat.hero b { font-size: 2.2rem }
+.seg { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--soft); border: 1px solid var(--line) }
+.seg button { min-height: 32px; padding: 0 12px; border: 0; border-radius: 999px; background: transparent; color: var(--ink2); font: 600 .85rem var(--sans); cursor: pointer }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(17, 19, 22, .12) }
+.check { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; font-size: .9rem; color: var(--ink2); cursor: pointer }
+.check input { width: 18px; height: 18px; accent-color: var(--accent); margin: 0 }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); z-index: 100; transform: translate(-50%, 12px); padding: 10px 16px; border-radius: 12px; background: var(--ink); color: var(--bg); font-weight: 600; font-size: .92rem; opacity: 0; pointer-events: none; transition: opacity .25s var(--ease), transform .25s var(--ease) }
+.toast.show { opacity: 1; transform: translate(-50%, 0) }
+.code { margin: 0; padding: 14px 18px; overflow-x: auto; font: .9rem/1.6 var(--mono); color: var(--ink); white-space: pre-wrap; word-break: break-word }
+.ft-article section h3 { margin-top: 32px }
+.ft-article .steps h3, .ft-article .uses h3 { margin-top: 0 }
+.ref { width: 100%; border-collapse: collapse; font-size: .95rem }
+.ref th, .ref td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top }
+.ref tbody tr:last-child > * { border-bottom: 0 }
+.ref code { font-size: .88em }
+code { font-family: var(--mono); font-size: .9em; padding: .1em .35em; border-radius: 6px; background: var(--soft) }
+.wb-h { margin: 0; font-size: .95rem; line-height: 1.3; letter-spacing: 0 }
+/* Phones: get the tool and its numbers into the first screen. */
+@media (max-width: 640px) {
+  .ft-head { padding-top: 16px; font-size: .8rem }
+  .ft-lang { padding: 4px 10px }
+  [data-layout="workbench"] h1 { font-size: 1.7rem; margin: 14px 0 8px }
+  [data-layout="workbench"] .ft-lead { font-size: .98rem; line-height: 1.5 }
+  .wb { margin-top: 18px; border-radius: 16px }
+  .wb-head { padding: 8px 8px 8px 14px; row-gap: 6px }
+  .wb-head .wb-label { white-space: nowrap }
+  .wb-actions { flex-wrap: nowrap }
+  .btn-sm { min-height: 34px; padding: 0 10px; font-size: .82rem }
+  .wb-area, .cc .wb-area { min-height: 150px; height: 150px; padding: 12px 14px }
+  .stat { padding: 10px 14px }
+  .cc .stat b { font-size: 1.35rem }
+}

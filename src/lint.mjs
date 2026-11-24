@@ -7,7 +7,7 @@ const odEnc = (s) => s.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&
 export function lintHtml(html, nazwa, { tool = true } = {}) {
   const out = [];
   for (const s of html.match(/<script\b[^>]*>/g) || []) {
-    if (/type="application\/ld\+json"/.test(s)) continue;
+    if (/type="application\/(ld\+)?json"/.test(s)) continue;
     if (!/\bsrc=/.test(s)) out.push(`${nazwa}: inline script: ${s.slice(0, 60)}`);
   }
   if (/\son[a-z]+="/i.test(html)) out.push(`${nazwa}: on*= attribute`);

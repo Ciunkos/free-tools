@@ -1,8 +1,8 @@
 /* Free tools: a Cloudflare Worker on ciunkos.com paths /free-tools* (EN) and /darmowe-narzedzia* (PL).
-   Static pages from public/<path>.html, assets under /free-tools/a/, sitemap and llms.txt at /free-tools/sitemap.xml
-   and /free-tools/llms.txt. No API beyond health: every tool runs in the browser and nothing the user does leaves it
+   Pages from public/<path>.html; every other file sits flat under /free-tools/ (app.css, icons/, img/, video/,
+   <tool>/<file>, sitemap.xml, llms.txt), served from public/free-tools/. No API beyond /free-tools/health: every tool runs in the browser and nothing the user does leaves it
    (except anonymous analytics without any tool input). Pattern: ~/business-tools/_worker.js. */
-import { STRONY, APEX, ASSETY, API, HUB, LANGS, innyLang } from './src/meta.mjs';
+import { STRONY, APEX, ASSETY, HEALTH, HUB, LANGS, innyLang } from './src/meta.mjs';
 import { WERSJA, ROZMIARY } from './src/wersja.mjs';
 import { POSTHOG_SDK } from './src/shared/posthog-sdk.mjs'; // copy from ciunkos.com/src/utils (check-posthog-copies.mjs)
 
@@ -100,28 +100,7 @@ export default {
       return wyj;
     }
 
-    if (p.startsWith(API + '/')) {
-      if (p === API + '/health') return json({ ok: true, version: WERSJA });
-      return json({ error: 'no such API' }, 404);
-    }
-
-    /* Sitemap and llms.txt sit right under the hub, no extra nesting. */
-    if (p === '/' + HUB.en + '/sitemap.xml' || p === '/' + HUB.en + '/llms.txt') {
-      const urlA = new URL(wej); urlA.pathname = p.slice(HUB.en.length + 1); urlA.search = '';
-      const plik = await env.ASSETS.fetch(new Request(urlA.toString(), request));
-      if (plik.status === 404) return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'no-store' } });
-      return naglowki(plik, p, { testHost });
-    }
-
-    if (p.startsWith(ASSETY + '/')) {
-      const urlA = new URL(wej); urlA.pathname = '/a' + p.slice(ASSETY.length); urlA.search = '';
-      const asset = await env.ASSETS.fetch(new Request(urlA.toString(), request));
-      if (asset.status === 404) return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'no-store' } });
-      const wyj = naglowki(asset, p, { wersjonowany: wej.searchParams.has('v'), testHost });
-      if (!/\.mp4$/i.test(p)) return wyj;
-      wyj.headers.set('Accept-Ranges', 'bytes');
-      return zakres(wyj, request, ROZMIARY[p.slice(ASSETY.length)]);
-    }
+    if (p === HEALTH) return json({ ok: true, version: WERSJA });
 
     for (const s of STRONY) for (const lang of LANGS) {
       if (p !== '/' + s.path[lang]) continue;
@@ -130,6 +109,19 @@ export default {
       if (plik.status === 404) return strona404(lang, testHost);
       const rw = new HTMLRewriter().on('script[data-posthog-config]', new SetPostHogConfig(env));
       return naglowki(rw.transform(plik), '/' + s.path[lang] + '.html', { html: true, testHost, twin: '/' + s.path[innyLang(lang)], lang });
+    }
+
+    /* Everything else under /free-tools/ is a static file. Generated pages are reachable only by their clean URL. */
+    if (p.startsWith(ASSETY + '/') && !/\.html$/i.test(p)) {
+      const urlA = new URL(wej); urlA.search = '';
+      const asset = await env.ASSETS.fetch(new Request(urlA.toString(), request));
+      /* 200, 206 and 304 (revalidation on reload) all pass through; only a real 404 falls to the page below. */
+      if (asset.status !== 404) {
+        const wyj = naglowki(asset, p, { wersjonowany: wej.searchParams.has('v'), testHost });
+        if (!/\.mp4$/i.test(p)) return wyj;
+        wyj.headers.set('Accept-Ranges', 'bytes');
+        return zakres(wyj, request, ROZMIARY[p.slice(ASSETY.length)]);
+      }
     }
 
     return strona404(p.startsWith('/' + HUB.pl) ? 'pl' : 'en', testHost);

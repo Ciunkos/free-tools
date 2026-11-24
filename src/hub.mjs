@@ -1,15 +1,15 @@
 /* hub.mjs: /free-tools and /darmowe-narzedzia, the directory of free tools. Built from TOOLS in meta.mjs. */
 import { esc } from './html.mjs';
-import { BAZA, HUB, HUB_NAME, TOOLS, LIVE, SOON, sciezka } from './meta.mjs';
-import { shell, faqLd } from './shell.mjs';
+import { BAZA, HUB, HUB_NAME, TOOLS, LIVE, SOON, sciezka, iconSvg } from './meta.mjs';
+import { shell, faqLd, toolCard } from './shell.mjs';
 
 const C = {
   en: {
     title: 'Free Tools by Przemysław Zalewski: Small, Fast, Private',
-    metaDescription: 'Small free tools I built for my own everyday problems: a white screen for cleaning monitors, with more on the way. No sign-up, nothing leaves your browser.',
+    metaDescription: 'Small free tools I built for my own problems: white screen, JWT decoder, character counter, Base64. No sign-up, nothing leaves your browser.',
     h1: 'Free tools',
     lead: 'Small tools for everyday jobs. Each one does one thing, opens instantly, works on a phone, and keeps what you do in your browser.',
-    przemo: 'Every tool here started with me getting annoyed. I needed something simple, searched for it, and found pages full of ads, pop-ups and sign-up walls. So I build the version I wanted to find, use it myself, and put it here for you.\n\nNext up are the ones I reach for every week: a JWT decoder, a character counter, and Base64 encode and decode.',
+    przemo: 'Every tool here started with me getting annoyed. I needed something simple, searched for it, and found pages full of ads, pop-ups and sign-up walls. So I build the version I wanted to find, use it myself, and put it here for you.\n\nThe ones I reach for every week are here: a JWT decoder, a character counter, and Base64. More will come as things annoy me.',
     listH: 'Tools', open: 'Open', soonH: 'Coming next', soon: 'Coming soon',
     faq: [
       { q: 'Are these tools really free?', a: 'Yes. No account, no ads, no paid tier. I use them myself and keep them up for everyone.' },
@@ -19,10 +19,10 @@ const C = {
   },
   pl: {
     title: 'Darmowe narzędzia Przemysława Zalewskiego: małe, szybkie, prywatne',
-    metaDescription: 'Małe darmowe narzędzia zrobione na moje codzienne problemy: biały ekran do czyszczenia monitora i kolejne. Bez rejestracji, wszystko zostaje w przeglądarce.',
+    metaDescription: 'Darmowe narzędzia na moje własne problemy: biały ekran, dekoder JWT, licznik znaków, Base64. Bez rejestracji, wszystko zostaje w przeglądarce.',
     h1: 'Darmowe narzędzia',
     lead: 'Małe narzędzia do codziennych spraw. Każde robi jedną rzecz, otwiera się od razu, działa na telefonie i zostawia to, co robisz, w Twojej przeglądarce.',
-    przemo: 'Każde narzędzie tutaj zaczęło się od tego, że coś mnie zirytowało. Potrzebowałem czegoś prostego, szukałem i trafiałem na strony pełne reklam, wyskakujących okienek i ścian z rejestracją. Robię więc wersję, którą sam chciałem znaleźć, używam jej i wrzucam tutaj dla Ciebie.\n\nNastępne w kolejce są te, po które sięgam co tydzień: dekoder JWT, licznik znaków oraz kodowanie i dekodowanie Base64.',
+    przemo: 'Każde narzędzie tutaj zaczęło się od tego, że coś mnie zirytowało. Potrzebowałem czegoś prostego, szukałem i trafiałem na strony pełne reklam, wyskakujących okienek i ścian z rejestracją. Robię więc wersję, którą sam chciałem znaleźć, używam jej i wrzucam tutaj dla Ciebie.\n\nSą tu te, po które sięgam co tydzień: dekoder JWT, licznik znaków i Base64. Kolejne dojdą, gdy coś znowu mnie zirytuje.',
     listH: 'Narzędzia', open: 'Otwórz', soonH: 'W kolejce', soon: 'Wkrótce',
     faq: [
       { q: 'Czy te narzędzia są naprawdę darmowe?', a: 'Tak. Bez konta, bez reklam, bez płatnej wersji. Sam ich używam i trzymam je dla wszystkich.' },
@@ -43,10 +43,10 @@ export function renderHub({ lang, wersja, updated }) {
     faqLd(T.faq)
   ];
   const body = `<section aria-labelledby="tools"><h2 id="tools">${esc(T.listH)}</h2>
-  <ul class="tool-grid tool-grid-lg">${LIVE.map((id) => { const t = TOOLS[id]; return `<li><a class="tool-card" href="/${sciezka(id, lang)}" data-track="tool_link_clicked" data-to="${id}"><span class="tool-swatch" style="--sw:${t.color}" aria-hidden="true"></span><strong>${esc(t.name[lang])}</strong><span>${esc(t.pain[lang])}</span><span class="tool-open">${esc(T.open)} →</span></a></li>`; }).join('')}</ul>
+  <ul class="tool-grid tool-grid-lg">${LIVE.map((id) => toolCard(id, lang, T.open)).join('')}</ul>
 </section>
 ${SOON.length ? `<section aria-labelledby="soon"><h2 id="soon">${esc(T.soonH)}</h2>
-  <ul class="tool-grid tool-grid-lg">${SOON.map((id) => { const t = TOOLS[id]; return `<li><div class="tool-card is-soon"><span class="tool-swatch" style="--sw:${t.color}" aria-hidden="true"></span><strong>${esc(t.name[lang])}</strong><span>${esc(t.pain[lang])}</span><span class="tool-open">${esc(T.soon)}</span></div></li>`; }).join('')}</ul>
+  <ul class="tool-grid tool-grid-lg">${SOON.map((id) => { const t = TOOLS[id]; return `<li><div class="tool-card is-soon"><span class="tool-icon" aria-hidden="true">${iconSvg(id, 40)}</span><strong>${esc(t.name[lang])}</strong><span>${esc(t.pain[lang])}</span><span class="tool-open">${esc(T.soon)}</span></div></li>`; }).join('')}</ul>
 </section>` : ''}`;
   return shell({ id: 'hub', layout: 'hub', lang, wersja, path, C: T, ld, body, updated, themeColor: '#f6f6f3' });
 }

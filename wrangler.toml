@@ -3,7 +3,7 @@ main = "_worker.js"
 compatibility_date = "2026-09-01"
 
 # Free tools under ciunkos.com paths: /free-tools/<tool> (EN) and /darmowe-narzedzia/<tool> (PL).
-# Assets, sitemap, llms.txt and the health API sit under /free-tools too. build.mjs checks these prefixes against src/meta.mjs.
+# Static files, sitemap, llms.txt and the health check sit flat under /free-tools too. build.mjs checks these prefixes against src/meta.mjs.
 routes = [
   { pattern = "ciunkos.com/free-tools*", zone_name = "ciunkos.com" },
   { pattern = "www.ciunkos.com/free-tools*", zone_name = "ciunkos.com" },

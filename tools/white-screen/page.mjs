@@ -20,7 +20,7 @@ import { VIDEOS } from '../../scripts/videos.mjs';
 const VIDEO_PUBLISHED = '2026-11-24';
 const mb = (b) => (b / 1048576).toFixed(1);
 import { statSync } from 'node:fs';
-const videoFiles = () => VIDEOS.map((v) => ({ ...v, bytes: statSync('public/a/video/' + v.file).size }));
+const videoFiles = () => VIDEOS.map((v) => ({ ...v, bytes: statSync('public/free-tools/video/' + v.file).size }));
 
 const C = {
   en: {
@@ -218,7 +218,7 @@ function body(lang, T) {
   </form>
   <h3>${esc(T.dlReady)}</h3>
   <p>${esc(T.dlReadyIntro)}</p>
-  <ul class="ready">${prebuilt.map((p) => `<li><a href="${ASSETY}/img/${fileName(p.w, p.h)}" download data-track="image_downloaded" data-size="${p.w}x${p.h}" data-how="ready"><span class="ready-frame" style="aspect-ratio:${p.w}/${p.h}"><img src="${ASSETY}/img/${fileName(p.w, p.h)}" width="${p.w}" height="${p.h}" loading="lazy" decoding="async" alt="${esc(lang === 'pl' ? `Biały obraz ${p.w}×${p.h} px, kolor #FFFFFF` : `Pure white image, ${p.w}×${p.h} px, #FFFFFF`)}"></span><span class="ready-cap"><strong>${esc(L(p.label))}</strong> ${p.w}×${p.h} PNG</span></a></li>`).join('')}</ul>
+  <ul class="ready">${prebuilt.map((p) => `<li><a href="${ASSETY}/img/${fileName(p.w, p.h)}" download data-track="image_downloaded" data-size="${p.w}x${p.h}" data-how="ready"><span class="ready-frame"><img src="${ASSETY}/img/${fileName(p.w, p.h)}" width="${p.w}" height="${p.h}" loading="lazy" decoding="async" alt="${esc(lang === 'pl' ? `Biały obraz ${p.w}×${p.h} px, kolor #FFFFFF` : `Pure white image, ${p.w}×${p.h} px, #FFFFFF`)}"></span><span class="ready-cap"><strong>${esc(L(p.label))}</strong> ${p.w}×${p.h} PNG</span></a></li>`).join('')}</ul>
 </section>
 
 <section aria-labelledby="video"><h2 id="video">${esc(T.vidH)}</h2>
@@ -261,8 +261,8 @@ export function render({ lang, wersja, updated }) {
   return shell({
     id: ID, layout: 'surface', lang, wersja, path, C: T, ld, updated,
     surface: surface(lang, T, paths), body: body(lang, T),
-    styles: ['t/white-screen/screen.css'], scripts: ['t/white-screen/screen.mjs'],
-    headExtra: `<link rel="manifest" href="${ASSETY}/t/white-screen/manifest-${lang}.webmanifest">\n<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n<meta name="apple-mobile-web-app-title" content="${esc(TOOLS[ID].name[lang])}">`
+    styles: ['white-screen/screen.css'], scripts: ['white-screen/screen.mjs'],
+    headExtra: `<link rel="manifest" href="${ASSETY}/white-screen/manifest-${lang}.webmanifest">\n<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n<meta name="apple-mobile-web-app-title" content="${esc(TOOLS[ID].name[lang])}">`
   });
 }
 

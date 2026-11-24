@@ -1,0 +1,37 @@
+/* JWT decoder. Part colours: header rose, payload violet, signature teal (also in the anatomy line below). */
+:root { --seg-h: #c2255c; --seg-p: #6d28d9; --seg-s: #0b7268; --ok: #15803d; --bad: #c2410c; --warn: #a16207 }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --seg-h: #ff6b9a; --seg-p: #b197fc; --seg-s: #38d9c0; --ok: #4ade80; --bad: #ff8a65; --warn: #facc15 } }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: 1px }
+.dot-h { background: var(--seg-h) } .dot-p { background: var(--seg-p) } .dot-s { background: var(--seg-s) }
+.jwt .wb-area { min-height: 140px }
+.jwt-out { border-top: 1px solid var(--line) }
+.jwt-status { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 14px 18px; border-bottom: 1px solid var(--line) }
+.jwt-status strong { font: 750 1.15rem var(--display) }
+.jwt-status span { color: var(--ink2) }
+.jwt-status.ok strong { color: var(--ok) } .jwt-status.bad strong { color: var(--bad) } .jwt-status.warn strong { color: var(--warn) }
+.jwt-warn { margin: 0; padding: 0 18px; list-style: none }
+.jwt-warn li { margin: 10px 0; padding: 10px 14px; border-radius: 10px; background: color-mix(in srgb, var(--warn) 12%, transparent); color: var(--ink); font-size: .92rem }
+.jwt-warn:empty { display: none }
+.jwt-grid { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--line) }
+@media (max-width: 760px) { .jwt-grid { grid-template-columns: 1fr } .jwt-card + .jwt-card { border-left: 0; border-top: 1px solid var(--line) } }
+.jwt-card { min-width: 0 }
+.jwt-card + .jwt-card { border-left: 1px solid var(--line) }
+.jwt-card-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px 0 18px }
+.jwt-card h2 { margin: 0; font-size: .95rem }
+.jwt-card .code { font-size: .86rem }
+.j-key { color: var(--seg-p) } .j-str { color: var(--ok) } .j-num { color: var(--bad) } .j-lit { color: var(--seg-h) }
+.jwt-claims-wrap { margin: 0; border: 0; border-radius: 0; border-bottom: 1px solid var(--line) }
+.jwt-claims td, .jwt-claims th { font-size: .9rem; word-break: break-word }
+.jwt-time { color: var(--muted); font-size: .85rem }
+.jwt-verify summary { cursor: pointer; padding: 14px 18px; font-weight: 650; list-style: none }
+.jwt-verify summary::-webkit-details-marker { display: none }
+.jwt-verify summary::after { content: "+"; float: right; color: var(--muted); font-weight: 400 }
+.jwt-verify[open] summary::after { content: "−" }
+.jwt-alg { margin-left: 6px; padding: 2px 8px; border-radius: 6px; background: var(--soft); font: 600 .8rem var(--mono); color: var(--ink2) }
+.jwt-verify-in { padding: 0 18px 16px }
+.jwt-key { min-height: 90px; margin: 8px 0; border: 1px solid var(--line); border-radius: 12px; background: var(--bg) }
+.jwt-vres { margin: 8px 0 0; font-weight: 650 }
+.jwt-vres.ok { color: var(--ok) } .jwt-vres.bad { color: var(--bad) }
+.jwt-anatomy { font: 600 1rem/1.6 var(--mono); word-break: break-all; padding: 14px 18px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line) }
+.seg-h { color: var(--seg-h) } .seg-p { color: var(--seg-p) } .seg-s { color: var(--seg-s) }
+.bullets { padding-left: 1.2em } .bullets li { margin: 0 0 10px; color: var(--ink2) }

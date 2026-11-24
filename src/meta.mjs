@@ -10,11 +10,17 @@ export const innyLang = (lang) => (lang === 'en' ? 'pl' : 'en');
 export const HUB = { en: 'free-tools', pl: 'darmowe-narzedzia' };
 export const HUB_NAME = { en: 'Free tools', pl: 'Darmowe narzędzia' };
 
-/* Assets, API, sitemap and llms.txt live under the EN prefix. */
-export const ASSETY = '/' + HUB.en + '/a';
-export const API = '/' + HUB.en + '/api';
+/* Static files sit flat under the EN hub: /free-tools/app.css, /free-tools/icons/…, /free-tools/<tool>/<file>.
+   On disk they live in public/free-tools/ (PUB), next to the generated pages. */
+export const ASSETY = '/' + HUB.en;
+export const PUB = 'public' + ASSETY;
+export const HEALTH = ASSETY + '/health';
+/* Names under /free-tools/ that are files or folders, so no tool slug may take them. */
+export const ZAREZERWOWANE = ['app.css', 'app.mjs', 'site-footer.css', 'icons', 'og', 'img', 'video', 'ph', 'health', 'sitemap.xml', 'llms.txt', 'przemo-160.webp', 'przemo-face.webp', 'kit.mjs'];
 
 /* status 'live' tools are routed, listed and linked. Add 'soon' entries only when you want them on the hub without a link. */
+/* Each tool: status ('live' is routed and linked), layout, slugs, name, the pain it solves (hub and cards), and an icon:
+   a rounded square in the tool's colour with a white line symbol on a 24-unit grid (favicons, cards, OG). */
 export const TOOLS = {
   'white-screen': {
     status: 'live',
@@ -26,12 +32,45 @@ export const TOOLS = {
       pl: 'Zobacz każdy pyłek, gdy czyścisz monitor, sprawdź martwe piksele albo doświetl twarz na rozmowie.'
     },
     color: '#ffffff',
+    icon: { bg: '#3b4048', d: "<rect x='3' y='4' width='18' height='12' rx='2' fill='white'/><path d='M9 20h6M12 16v4'/>" },
     category: 'UtilitiesApplication'
   },
-  /* Next up: shown on the hub as "coming next", never linked until status is 'live'. */
-  'jwt-decoder': { status: 'soon', name: { en: 'JWT decoder', pl: 'Dekoder JWT' }, pain: { en: 'Read a token’s header, claims and expiry without pasting it into someone else’s server.', pl: 'Odczytaj nagłówek, claimy i ważność tokena bez wklejania go na cudzy serwer.' }, color: '#8fb0ff' },
-  'character-counter': { status: 'soon', name: { en: 'Character counter', pl: 'Licznik znaków' }, pain: { en: 'Characters, words and lines as you type, with the limits of the places you post to.', pl: 'Znaki, słowa i linie na bieżąco, z limitami miejsc, w których publikujesz.' }, color: '#d7f34b' },
-  base64: { status: 'soon', name: { en: 'Base64 encode and decode', pl: 'Base64: kodowanie i dekodowanie' }, pain: { en: 'Text and files to Base64 and back, Unicode-safe, in your browser.', pl: 'Tekst i pliki do Base64 i z powrotem, z polskimi znakami, w przeglądarce.' }, color: '#e9e3ff' }
+  'jwt-decoder': {
+    status: 'live',
+    layout: 'workbench',
+    slug: { en: 'jwt-decoder', pl: 'dekoder-jwt' },
+    name: { en: 'JWT decoder', pl: 'Dekoder JWT' },
+    pain: { en: 'Read a token’s header, claims and expiry, and verify its signature, without pasting it into someone else’s server.', pl: 'Odczytaj nagłówek, claimy i ważność tokena oraz sprawdź podpis bez wklejania go na cudzy serwer.' },
+    color: '#7c3aed',
+    icon: { bg: '#7c3aed', d: "<circle cx='8' cy='15' r='4'/><path d='M10.8 12.2 20 3M16 7l3 3M13.5 9.5l2 2'/>" },
+    category: 'DeveloperApplication'
+  },
+  'character-counter': {
+    status: 'live',
+    layout: 'workbench',
+    slug: { en: 'character-counter', pl: 'licznik-znakow' },
+    name: { en: 'Character counter', pl: 'Licznik znaków' },
+    pain: { en: 'Characters with and without spaces, words and lines as you type, against the limits of the places you post to.', pl: 'Znaki ze spacjami i bez, słowa i linie na bieżąco, z limitami miejsc, w których publikujesz.' },
+    color: '#15803d',
+    icon: { bg: '#15803d', d: "<path d='M10 3 8 21M16 3l-2 18M4 8.5h16M3.5 15.5h16'/>" },
+    category: 'UtilitiesApplication'
+  },
+  base64: {
+    status: 'live',
+    layout: 'workbench',
+    slug: { en: 'base64-encode-decode', pl: 'base64-koduj-dekoduj' },
+    name: { en: 'Base64 encode and decode', pl: 'Base64: kodowanie i dekodowanie' },
+    pain: { en: 'Text and files to Base64 and back as you type, with Polish letters and emoji intact, in your browser.', pl: 'Tekst i pliki do Base64 i z powrotem na bieżąco, z polskimi znakami i emoji, w Twojej przeglądarce.' },
+    color: '#c2410c',
+    icon: { bg: '#c2410c', d: "<path d='M4 8h15l-3.5-3.5M20 16H5l3.5 3.5'/>" },
+    category: 'DeveloperApplication'
+  }
+};
+
+/** Icon as SVG markup (size in px), shared by cards, favicons and OG cards. */
+export const iconSvg = (id, size = 64) => {
+  const { bg, d } = TOOLS[id].icon;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="${bg}"/><g transform="translate(5 5) scale(0.9167)" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</g></svg>`;
 };
 
 export const SOON = Object.entries(TOOLS).filter(([, t]) => t.status === 'soon').map(([id]) => id);

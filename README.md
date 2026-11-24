@@ -18,7 +18,7 @@ src/shell.mjs           page frame: head, "Przemo says", FAQ, More free tools, a
 src/hub.mjs             the /free-tools directory page
 src/shared/*            byte copies kept in sync from ~/hire and ciunkos.com (footer, schema-ld, daty, PostHog SDK)
 tools/<id>/page.mjs     copy (EN, PL), markup and JSON-LD of one tool; its git history is the page's dateModified
-tools/<id>/*.mjs|.css   client code, copied to public/a/t/<id>/ by the build
+tools/<id>/*.mjs|.css   client code, copied to public/free-tools/<slug>/ by the build (served at /free-tools/<slug>/<file>)
 ```
 
 ### Adding a tool

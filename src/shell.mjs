@@ -3,7 +3,7 @@
    Layouts: 'surface' (the first viewport IS the tool, e.g. white screen), 'workbench' (H1 + tool panel up top, e.g. text tools),
    'hub' (the directory). Zero inline scripts (CSP); JSON-LD blocks are merged into one @graph by ulepszLd in build.mjs. */
 import { esc, jsonLd, inline } from './html.mjs';
-import { BAZA, ASSETY, HUB, HUB_NAME, TOOLS, LIVE, LINKI, innyLang, sciezka } from './meta.mjs';
+import { BAZA, ASSETY, HUB, HUB_NAME, TOOLS, LIVE, LINKI, innyLang, sciezka, iconSvg } from './meta.mjs';
 import { PERSON_ID } from './shared/schema-ld.mjs';
 import { siteFooter } from './shared/site-footer.mjs';
 
@@ -43,10 +43,16 @@ export function faqHtml(lang, faq) {
 }
 export const faqLd = (faq) => ({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: String(f.a).replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/\*\*|`/g, '') } })) });
 
+/** One tool card: icon, name, the pain it solves. `open` adds the call to action line (hub). */
+export function toolCard(id, lang, open = '') {
+  const t = TOOLS[id];
+  return `<li><a class="tool-card" href="/${sciezka(id, lang)}" data-track="tool_link_clicked" data-to="${id}"><span class="tool-icon" aria-hidden="true">${iconSvg(id, 40)}</span><strong>${esc(t.name[lang])}</strong><span>${esc(t.pain[lang])}</span>${open ? `<span class="tool-open">${esc(open)} →</span>` : ''}</a></li>`;
+}
+
 /** Cards for the other live tools (and the hub link). Only tools that exist are linked. */
 export function moreTools(lang, current) {
   const others = LIVE.filter((id) => id !== current);
-  const card = (id) => { const t = TOOLS[id]; return `<li><a class="tool-card" href="/${sciezka(id, lang)}" data-track="tool_link_clicked" data-to="${id}"><span class="tool-swatch" style="--sw:${t.color}" aria-hidden="true"></span><strong>${esc(t.name[lang])}</strong><span>${esc(t.pain[lang])}</span></a></li>`; };
+  const card = (id) => toolCard(id, lang);
   return `<section class="ft-more" aria-labelledby="more-tools"><h2 id="more-tools">${esc(UI[lang].more)}</h2>
   ${others.length ? `<ul class="tool-grid">${others.map(card).join('')}</ul>` : ''}
   <p><a class="arrow-link" href="/${HUB[lang]}" data-track="tool_link_clicked" data-to="hub">${esc(UI[lang].all)} →</a></p>
@@ -131,7 +137,7 @@ ${layout === 'surface' ? surface : ''}
 <main id="content" class="ft-main" tabindex="-1">
 ${contentHeader(lang, crumbs, path)}
 <article class="ft-article">
-  ${layout === 'workbench' ? `${intro}\n  ${tool}` : intro}
+  ${layout === 'workbench' ? `<h1>${esc(C.h1)}</h1>\n  <p class="ft-lead">${inline(C.lead)}</p>\n  ${tool}\n  ${C.przemo ? przemoSays(lang, C.przemo) : ''}` : intro}
   ${body}
   ${C.faq ? faqHtml(lang, C.faq) : ''}
 </article>
@@ -148,7 +154,27 @@ ${scripts.map((s) => `<script src="${ASSETY}/${s}${v}" type="module"></script>`)
 
 export const webApp = ({ id, lang, url, C }) => ({
   '@context': 'https://schema.org', '@type': 'WebApplication', '@id': url + '#app', name: TOOLS[id].name[lang], url, description: C.metaDescription,
-  applicationCategory: TOOLS[id].category || 'UtilitiesApplication', operatingSystem: 'Any (web browser)', browserRequirements: 'Requires JavaScript for full screen and downloads',
+  applicationCategory: TOOLS[id].category || 'UtilitiesApplication', operatingSystem: 'Any (web browser)', browserRequirements: 'Requires JavaScript',
   inLanguage: lang, isAccessibleForFree: true, offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }, author: { '@id': PERSON_ID }
 });
 export { PERSON_ID };
+
+const LOCK = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+/** "Runs in your browser" note for the workbench footer. */
+export const privateNote = (lang, text) => `<span class="private">${LOCK}${esc(text || (lang === 'pl' ? 'Wszystko dzieje się w Twojej przeglądarce. Nic nie jest wysyłane ani zapisywane.' : 'Everything happens in your browser. Nothing is sent or saved.'))}</span>`;
+/** Strings for the client script, as a JSON data block (not executed, so the CSP allows it). */
+export const i18nScript = (obj) => `<script type="application/json" id="i18n">${JSON.stringify(obj).replace(/</g, '\\u003c')}</script>`;
+
+/** A workbench tool page: WebPage + WebApplication + FAQ (+ extra LD), its client script and stylesheet. */
+export function toolPage({ id, lang, wersja, updated, C, tool, body, ld = [], about }) {
+  const path = { en: sciezka(id, 'en'), pl: sciezka(id, 'pl') };
+  const url = BAZA + '/' + path[lang];
+  const slug = TOOLS[id].slug.en;
+  const graph = [
+    { '@context': 'https://schema.org', '@type': 'WebPage', '@id': url, url, name: C.title, description: C.metaDescription, inLanguage: lang, mainEntity: { '@id': url + '#app' }, ...(about ? { about: { '@type': 'Thing', name: about } } : {}) },
+    webApp({ id, lang, url, C }),
+    ...ld.map((x) => (typeof x === 'function' ? x(url) : x)),
+    faqLd(C.faq)
+  ];
+  return shell({ id, layout: 'workbench', lang, wersja, path, C, ld: graph, tool, body, updated, styles: [`${slug}/style.css`], scripts: [`${slug}/app.mjs`], themeColor: TOOLS[id].icon.bg });
+}

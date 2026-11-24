@@ -1,7 +1,7 @@
 /* indexnow.mjs — po deployu zgłasza Bingowi i reszcie sieci IndexNow (Yandex, Seznam, Naver; z indeksu Binga
    biorą też Copilot i wyszukiwarka ChatGPT) strony tego narzędzia, które się zmieniły. Wzór: ~/translate/scripts/indexnow.mjs.
 
-   Adresy z public/sitemap.xml. Zmianę poznajemy po odcisku: hash pliku public/<ścieżka>.html (strona
+   Adresy z public/free-tools/sitemap.xml. Zmianę poznajemy po odcisku: hash pliku public/<ścieżka>.html (strona
    statyczna), a gdy go nie ma, wersja assetów. Stan poprzedniego zgłoszenia w indexnow-stan.json (poza repo
    i serwerem); bez niego pierwszy przebieg zgłasza wszystko.
 
@@ -21,7 +21,7 @@ const STAN = new URL('../indexnow-stan.json', import.meta.url);
 const dry = process.argv.includes('--dry');
 const hash = (b) => createHash('sha1').update(b).digest('hex').slice(0, 12);
 
-const mapa = readFileSync(new URL('../public/sitemap.xml', import.meta.url), 'utf8');
+const mapa = readFileSync(new URL('../public/free-tools/sitemap.xml', import.meta.url), 'utf8');
 const adresy = [...mapa.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]).filter((u) => new URL(u).host === HOST);
 const wersja = existsSync(new URL('../src/wersja.mjs', import.meta.url)) ? readFileSync(new URL('../src/wersja.mjs', import.meta.url), 'utf8') : String(Date.now());
 const teraz = {};

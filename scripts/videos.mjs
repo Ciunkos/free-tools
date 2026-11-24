@@ -11,7 +11,7 @@ export const VIDEOS = [
   { id: '1080p', w: 1920, h: 1080, file: 'white-screen-10-hours-1080p.mp4' },
   { id: '4k', w: 3840, h: 2160, file: 'white-screen-10-hours-4k.mp4' }
 ];
-export const DIR = 'public/a/video';
+export const DIR = 'public/free-tools/video';
 
 const run = (args) => execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', ...args], { maxBuffer: 1 << 28 });
 

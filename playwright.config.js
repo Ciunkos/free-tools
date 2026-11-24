@@ -7,5 +7,5 @@ export default defineConfig({
     { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
     { name: 'mobile', use: { ...devices['iPhone 13'] } }
   ],
-  webServer: { command: 'npx wrangler dev --port 8842', url: 'http://127.0.0.1:8842/free-tools/api/health', reuseExistingServer: true, timeout: 60000 }
+  webServer: { command: 'npx wrangler dev --port 8842', url: 'http://127.0.0.1:8842/free-tools/health', reuseExistingServer: true, timeout: 60000 }
 });

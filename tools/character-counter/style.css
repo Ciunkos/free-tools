@@ -1,0 +1,32 @@
+/* Character counter. */
+.cc .wb-area { min-height: 240px; font-size: 1.05rem }
+.cc .stats { grid-template-columns: repeat(5, 1fr) }
+@media (max-width: 760px) { .cc .stats { grid-template-columns: repeat(2, 1fr) } }
+.cc .stat b { font-size: 1.7rem }
+.cc .stat:nth-child(-n+3) b { color: var(--ink) }
+.cc .stat:nth-child(n+4) b { color: var(--ink2) }
+.cc-other { margin: 0; padding: 10px 18px; border-top: 1px solid var(--line); font-size: .85rem; color: var(--muted) }
+.cc-cols { display: grid; grid-template-columns: 1.6fr 1fr; border-top: 1px solid var(--line) }
+@media (max-width: 760px) { .cc-cols { grid-template-columns: 1fr } .cc-top { border-left: 0 !important; border-top: 1px solid var(--line) } }
+.cc-limits, .cc-top { padding: 16px 18px; min-width: 0 }
+.cc-top { border-left: 1px solid var(--line) }
+.cc-cols h2 { margin: 0 0 10px; font-size: .95rem }
+#cc-limits { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px }
+.lim-top { display: flex; justify-content: space-between; gap: 12px; font-size: .9rem; color: var(--ink2) }
+.lim-top small { color: var(--muted) }
+.lim-n { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--muted) }
+.lim-n b { color: var(--ink) }
+.bar { height: 6px; margin-top: 5px; border-radius: 99px; background: var(--soft); overflow: hidden }
+.bar i { display: block; height: 100%; width: 0; border-radius: inherit; background: #15803d; transition: width .2s var(--ease), background .2s }
+.near .bar i { background: #ca8a04 } .over .bar i { background: #dc2626 }
+.over .lim-n b { color: #dc2626 }
+.lim-sms .lim-n { color: var(--ink2) }
+.lim-note { margin: 4px 0 0; font-size: .82rem; color: var(--muted) }
+.lim-note:empty { display: none }
+#cc-top { margin: 0; padding: 0; list-style: none; counter-reset: w }
+#cc-top li { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: .92rem; counter-increment: w }
+#cc-top li::before { content: counter(w); width: 1.6em; color: var(--muted); font-variant-numeric: tabular-nums }
+#cc-top li span { flex: 1; overflow: hidden; text-overflow: ellipsis }
+#cc-top li.none { color: var(--muted); border: 0 } #cc-top li.none::before { content: none }
+.cc-sample { font-size: 1.2rem }
+@media (max-width: 640px) { .cc .wb-area { min-height: 150px; height: 150px } }

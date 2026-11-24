@@ -1,5 +1,5 @@
 /* app.mjs: PostHog with the pinned SDK from ciunkos.com/vendor (SRI), traffic through our own proxy, data-track events.
-   No inline code in HTML (CSP). Copied from ~/business-tools/public/a/app.mjs; app = free-tools, page = tool id. */
+   No inline code in HTML (CSP). Copied from ~/business-tools/public/a/app.mjs (served here as /free-tools/app.mjs); app = free-tools, page = tool id. */
 const WERSJA = new URL(import.meta.url).searchParams.get('v') || 'dev';
 let ph = null;
 (function initPostHog() {
