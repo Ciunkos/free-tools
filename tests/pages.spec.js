@@ -86,6 +86,20 @@ test('white screen: the iPhone fallback covers the screen when there is no Fulls
   await expect(page.locator('#stage')).not.toHaveClass(/is-pseudo/);
 });
 
+test('white screen: a refused full screen falls back without the iPhone tip, and stray key events do not throw', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'the iPhone project runs WebKit without element full screen, where the iPhone tip is the right message');
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.addInitScript(() => { Element.prototype.requestFullscreen = () => Promise.reject(new TypeError('not granted')); });
+  await page.goto('/free-tools/white-screen');
+  await page.locator('#fs-btn').click();
+  await expect(page.locator('#stage')).toHaveClass(/is-pseudo/);
+  await expect(page.locator('#stage-toast')).not.toContainText('Home Screen');
+  await page.evaluate(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })));
+  await expect(page.locator('#stage')).not.toHaveClass(/is-pseudo/);
+  expect(errors).toEqual([]);
+});
+
 test('white screen: shades change the surface and the URL hash, and the hash restores them', async ({ page }) => {
   await page.goto('/free-tools/white-screen');
   await page.locator('.tint[data-tint="warm"]').click();

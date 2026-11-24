@@ -21,8 +21,8 @@ async function enter(how) {
   try {
     if (stage.requestFullscreen) await stage.requestFullscreen({ navigationUI: 'hide' });
     else if (stage.webkitRequestFullscreen) stage.webkitRequestFullscreen();
-    else pseudo(true);
-  } catch { pseudo(true); }
+    else pseudo(true, true);
+  } catch { pseudo(true, false); }
   track('fullscreen_entered', { how, mode: nativeFs ? 'native' : 'pseudo', tint: stage.dataset.tint });
 }
 async function exit() {
@@ -32,10 +32,16 @@ async function exit() {
 const toggle = (how) => (isFs() ? exit() : enter(how));
 
 /* iPhone: no element full screen in Safari. Cover the viewport, lock scrolling, and tell people once about Add to Home Screen. */
-function pseudo(on) {
+function pseudo(on, noApi = false) {
   stage.classList.toggle('is-pseudo', on);
   document.documentElement.classList.toggle('lock', on);
-  if (on) { scrollTo(0, 0); let seen = false; try { seen = localStorage.getItem('ws_ios_tip') === '1'; localStorage.setItem('ws_ios_tip', '1'); } catch { /* private mode */ } show(seen ? toast.dataset.touch : toast.dataset.ios, seen ? 3000 : 7000); }
+  if (on) {
+    scrollTo(0, 0);
+    /* No Fullscreen API at all (iPhone): explain Add to Home Screen once. Refused by the browser (in-app browsers, policies): just how to exit. */
+    let seen = !noApi;
+    if (noApi) try { seen = localStorage.getItem('ws_ios_tip') === '1'; localStorage.setItem('ws_ios_tip', '1'); } catch { /* private mode */ }
+    show(seen ? (touch ? toast.dataset.touch : toast.dataset.desk) : toast.dataset.ios, seen ? 3000 : 7000);
+  }
   changed();
 }
 
@@ -90,7 +96,7 @@ for (const a of document.querySelectorAll('[data-fs-jump]')) a.addEventListener(
 
 /* ---------- Keyboard ---------- */
 document.addEventListener('keydown', (e) => {
-  if (e.metaKey || e.ctrlKey || e.altKey || e.target.closest('input, textarea, select, [contenteditable]')) return;
+  if (e.metaKey || e.ctrlKey || e.altKey || (e.target instanceof Element && e.target.closest('input, textarea, select, [contenteditable]'))) return;
   if (e.key === 'f' || e.key === 'F') { e.preventDefault(); toggle('key'); }
   else if (e.key === 'Escape' && stage.classList.contains('is-pseudo')) pseudo(false);
   else if (/^[1-4]$/.test(e.key) && (isFs() || stage.getBoundingClientRect().bottom > innerHeight / 2)) { setTint(TINTS[+e.key - 1], 'key'); activity(); }
