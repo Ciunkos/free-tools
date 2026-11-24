@@ -1,10 +1,10 @@
-/* File converter: the directory page (/free-tools/file-converter) and one page per x-to-y pair. The first screen is the
+/* File converter: the directory page (/free-tools/converter) and one page per x-to-y pair under it (/free-tools/converter/mov-to-gif). The first screen is the
    tool, White-screen simple: one line, one big button, drop anywhere. Copy per pair comes from pairs.mjs and formats.mjs. */
 import { esc, inline } from '../../src/html.mjs';
-import { BAZA, HUB, HUB_NAME, TOOLS, sciezka } from '../../src/meta.mjs';
+import { BAZA, HUB, HUB_NAME, TOOLS, sciezka, pairPath } from '../../src/meta.mjs';
 import { shell, faqLd, webApp, i18nScript } from '../../src/shell.mjs';
 import { FORMATS, TARGETS, fmtName } from './formats.mjs';
-import { PAIRS, PAIR, GROUPS, slugOf } from './pairs.mjs';
+import { PAIRS, PAIR, GROUPS } from './pairs.mjs';
 
 export const ID = 'converter';
 /* English article as format names are read aloud: an MP3, an SVG, a MOV, a HEIC. */
@@ -17,7 +17,7 @@ const UI = {
     pairH1: (f, t) => `${f} to ${t} converter`, pairTitle: (f, t) => `${f} to ${t} Converter: Free, No Upload, in Your Browser`,
     pairDesc: (f, t, hook) => `Convert ${f} to ${t} for free, right in your browser. ${hook} Your files are never uploaded.`,
     big: (f, t) => `Drop ${art(f)} ${f === 'Video' ? 'video' : f} file, get ${art(t)} ${t}.`,
-    dirH1: 'File converter', dirBig: 'Drop any file to convert it.', choose: 'Choose a file', chooseMore: 'Choose files',
+    dropHere: 'Drop to convert', dirH1: 'File converter', dirBig: 'Drop any file to convert it.', choose: 'Choose a file', chooseMore: 'Choose files',
     hint: 'or drop it anywhere · converted on your computer, never uploaded', to: 'Convert to', more: 'How it works ↓',
     pickTarget: 'Convert to:', converting: 'Converting…', reading: 'Reading the file…', loading: 'Loading the converter…',
     download: 'Download', downloadAll: 'Download all', another: 'Convert another', cancel: 'Cancel', retry: 'Try again', options: 'Options',
@@ -50,7 +50,7 @@ const UI = {
     pairH1: (f, t) => `Konwerter ${f} na ${t}`, pairTitle: (f, t) => `Konwerter ${f} na ${t}: za darmo, bez wysyłania plików`,
     pairDesc: (f, t, hook) => `Zamień ${f} na ${t} za darmo, w przeglądarce. ${hook} Pliki nigdy nie są nigdzie wysyłane.`,
     big: (f, t) => `Upuść plik ${f}, dostaniesz ${t}.`,
-    dirH1: 'Konwerter plików', dirBig: 'Upuść dowolny plik, żeby go przekonwertować.', choose: 'Wybierz plik', chooseMore: 'Wybierz pliki',
+    dropHere: 'Upuść, żeby przekonwertować', dirH1: 'Konwerter plików', dirBig: 'Upuść dowolny plik, żeby go przekonwertować.', choose: 'Wybierz plik', chooseMore: 'Wybierz pliki',
     hint: 'albo upuść go w dowolnym miejscu · konwersja na Twoim komputerze, bez wysyłania', to: 'Zamień na', more: 'Jak to działa ↓',
     pickTarget: 'Zamień na:', converting: 'Konwertuję…', reading: 'Czytam plik…', loading: 'Ładuję konwerter…',
     download: 'Pobierz', downloadAll: 'Pobierz wszystkie', another: 'Konwertuj kolejny', cancel: 'Anuluj', retry: 'Spróbuj ponownie', options: 'Opcje',
@@ -93,8 +93,8 @@ function surface(lang, U, { from, to, h1, big, paths }) {
   const kind = from ? FORMATS[from].kind : null;
   const targets = kind ? TARGETS[kind] : [];
   const o = U.o;
-  return `${i18nScript({ lang, ...U, steps: undefined, pairH1: undefined, pairTitle: undefined, pairDesc: undefined, big: undefined, howH: undefined, vsH: undefined, faq: undefined, yt: undefined, przemo: undefined, pairs: Object.fromEntries(PAIRS.map((p) => [p.from + '>' + p.to, '/' + (lang === 'pl' ? HUB.pl : HUB.en) + '/' + slugOf(p, lang)])), names: Object.fromEntries(Object.keys(FORMATS).map((k) => [k, fmtName(k, lang)])), targets: TARGETS })}
-<section class="drop" id="drop" data-from="${from || ''}" data-to="${to || ''}" aria-labelledby="drop-h">
+  return `${i18nScript({ lang, ...U, steps: undefined, pairH1: undefined, pairTitle: undefined, pairDesc: undefined, big: undefined, howH: undefined, vsH: undefined, faq: undefined, yt: undefined, przemo: undefined, pairs: Object.fromEntries(PAIRS.map((p) => [p.from + '>' + p.to, '/' + pairPath(p, lang)])), names: Object.fromEntries(Object.keys(FORMATS).map((k) => [k, fmtName(k, lang)])), targets: TARGETS })}
+<section class="drop" id="drop" data-from="${from || ''}" data-to="${to || ''}" data-drop-text="${esc(U.dropHere)}" aria-labelledby="drop-h">
   <div class="drop-top"><a href="/${paths.hub}" class="drop-crumb">ciunkos.com<span aria-hidden="true"> / </span>${esc(HUB_NAME[lang])}</a><a class="drop-lang" href="/${paths[inny]}" hreflang="${inny}" lang="${inny}" data-track="lang_switched" data-to="${inny}">${inny === 'pl' ? 'Polski' : 'English'}</a></div>
   <div class="drop-center">
     ${from ? `<div class="pill"><span class="pill-from" id="pill-from">${esc(fmtName(from, lang))}</span><span class="pill-arrow" aria-hidden="true">→</span><label class="sr" for="to">${esc(U.to)}</label><select id="to" class="pill-select">${targets.map((t) => `<option value="${t}"${t === to ? ' selected' : ''}>${esc(fmtName(t, lang))}</option>`).join('')}</select></div>` : `<div class="pill" hidden><span class="pill-from" id="pill-from"></span><span class="pill-arrow" aria-hidden="true">→</span><label class="sr" for="to">${esc(U.to)}</label><select id="to" class="pill-select"></select></div>`}
@@ -137,26 +137,26 @@ function pairBody(lang, U, p) {
   </table></div>
 </section>
 <section aria-labelledby="other"><h2 id="other">${esc(U.otherH)}</h2>
-  <ul class="pair-links">${others.map((x) => `<li><a href="/${lang === 'pl' ? HUB.pl : HUB.en}/${slugOf(x, lang)}" data-track="tool_link_clicked" data-to="${x.id}">${esc(fmtName(x.from, lang))} → ${esc(fmtName(x.to, lang))}</a></li>`).join('')}<li><a class="arrow-link" href="/${sciezka(ID, lang)}">${esc(U.allLink)} →</a></li></ul>
+  <ul class="pair-links">${others.map((x) => `<li><a href="/${pairPath(x, lang)}" data-track="tool_link_clicked" data-to="${x.id}">${esc(fmtName(x.from, lang))} → ${esc(fmtName(x.to, lang))}</a></li>`).join('')}<li><a class="arrow-link" href="/${sciezka(ID, lang)}">${esc(U.allLink)} →</a></li></ul>
 </section>`;
 }
 
 function dirBody(lang, U) {
   return Object.entries(GROUPS).map(([g, name]) => `
 <section aria-labelledby="g-${g}"><h2 id="g-${g}">${esc(name[lang])}</h2>
-  <ul class="pair-links">${PAIRS.filter((p) => p.group === g).map((x) => `<li><a href="/${lang === 'pl' ? HUB.pl : HUB.en}/${slugOf(x, lang)}" data-track="tool_link_clicked" data-to="${x.id}">${esc(fmtName(x.from, lang))} → ${esc(fmtName(x.to, lang))}</a></li>`).join('')}</ul>
+  <ul class="pair-links">${PAIRS.filter((p) => p.group === g).map((x) => `<li><a href="/${pairPath(x, lang)}" data-track="tool_link_clicked" data-to="${x.id}">${esc(fmtName(x.from, lang))} → ${esc(fmtName(x.to, lang))}</a></li>`).join('')}</ul>
 </section>`).join('');
 }
 
 export function render({ lang, wersja, updated, pair }) {
   const U = UI[lang];
   const p = pair ? PAIR[pair] : null;
-  const path = p ? { en: HUB.en + '/' + slugOf(p, 'en'), pl: HUB.pl + '/' + slugOf(p, 'pl') } : { en: sciezka(ID, 'en'), pl: sciezka(ID, 'pl') };
+  const path = p ? { en: pairPath(p, 'en'), pl: pairPath(p, 'pl') } : { en: sciezka(ID, 'en'), pl: sciezka(ID, 'pl') };
   const url = BAZA + '/' + path[lang];
   const f = p && fmtName(p.from, lang), t = p && fmtName(p.to, lang);
   const faq = p ? [...p.faq[lang], ...U.faq.slice(0, 2), ...(p.group === 'video-audio' || p.group === 'video' || p.group === 'gif' ? [U.yt] : []), ...U.faq.slice(2)] : [...U.faq, U.yt];
   const C = p
-    ? { title: U.pairTitle(f, t), metaDescription: U.pairDesc(f, t, hooks[lang][p.group]), crumb: U.pairH1(f, t), h1: U.pairH1(f, t), lead: p.note[lang], przemo: U.przemo, faq, ogTitle: U.pairH1(f, t) }
+    ? { title: U.pairTitle(f, t), metaDescription: U.pairDesc(f, t, hooks[lang][p.group]), crumb: U.pairH1(f, t), parent: [U.dirH1, '/' + sciezka(ID, lang)], h1: U.pairH1(f, t), lead: p.note[lang], przemo: U.przemo, faq, ogTitle: U.pairH1(f, t) }
     : { title: U.dirTitle, metaDescription: U.dirDesc, crumb: U.dirH1, h1: U.dirH1, lead: U.dirLead, przemo: U.przemo, faq };
   const app = { ...webApp({ id: ID, lang, url, C }), name: C.h1 };
   const ld = [
@@ -171,6 +171,6 @@ export function render({ lang, wersja, updated, pair }) {
     id: ID, layout: 'drop', lang, wersja, path, C, ld, updated, ogId: og,
     surface: surface(lang, U, { from: p ? p.from : null, to: p ? p.to : null, h1: C.h1, big: p ? U.big(f, t) : U.dirBig, paths }),
     body: p ? pairBody(lang, U, p) : dirBody(lang, U),
-    styles: ['file-converter/style.css'], scripts: ['file-converter/app.mjs'], themeColor: TOOLS[ID].icon.bg
+    styles: ['converter/style.css'], scripts: ['converter/app.mjs'], themeColor: TOOLS[ID].icon.bg
   });
 }

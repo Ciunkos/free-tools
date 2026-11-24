@@ -6,7 +6,8 @@ import { execFileSync } from 'node:child_process';
 import { writeFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { PAIRS, slugOf } from '../tools/converter/pairs.mjs';
+import { PAIRS } from '../tools/converter/pairs.mjs';
+import { pairPath } from '../src/meta.mjs';
 
 const FIX = { mp4: 'clip.mp4', mov: 'clip.mov', webm: 'clip.webm', mkv: 'clip.mkv', video: 'clip.mov', mp3: 'tone.mp3', wav: 'tone.wav', m4a: 'tone.m4a', aac: 'tone.aac', flac: 'tone.flac', ogg: 'tone.ogg', gif: 'anim.gif', heic: 'img.heic', jpg: 'img.jpg', png: 'img.png', webp: 'img.webp', avif: 'img.avif', svg: 'img.svg' };
 const SIG = {
@@ -29,7 +30,7 @@ for (const p of PAIRS) {
     page.on('request', (r) => { const u = new URL(r.url()); if (/^https?:$/.test(u.protocol) && u.hostname !== '127.0.0.1') external.push(r.url()); });
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
-    await page.goto('/free-tools/' + slugOf(p, 'en'));
+    await page.goto('/' + pairPath(p, 'en'));
     await page.locator('#file').setInputFiles('tests/fixtures/' + FIX[p.from]);
     const job = page.locator('.job').first();
     await expect(job).toHaveAttribute('data-state', 'done', { timeout: 50000 });
@@ -51,16 +52,16 @@ for (const p of PAIRS) {
 }
 
 test('directory: any file in, choose the format, URL follows the pair', async ({ page }) => {
-  await page.goto('/free-tools/file-converter');
+  await page.goto('/free-tools/converter');
   await page.locator('#file').setInputFiles('tests/fixtures/img.png');
   await expect(page.locator('#pick-target')).toBeVisible();
   await page.locator('#targets [data-to="jpg"]').click();
   await expect(page.locator('.job').first()).toHaveAttribute('data-state', 'done', { timeout: 20000 });
-  expect(new URL(page.url()).pathname).toBe('/free-tools/png-to-jpg');
+  expect(new URL(page.url()).pathname).toBe('/free-tools/converter/png-to-jpg');
 });
 
 test('wrong file for the page still converts, to a target that fits it', async ({ page }) => {
-  await page.goto('/free-tools/heic-to-jpg');
+  await page.goto('/free-tools/converter/heic-to-jpg');
   await page.locator('#file').setInputFiles('tests/fixtures/tone.wav');
   await expect(page.locator('.job').first()).toHaveAttribute('data-state', 'done', { timeout: 20000 });
   await expect(page.locator('#to')).toHaveValue('mp3');
@@ -68,7 +69,7 @@ test('wrong file for the page still converts, to a target that fits it', async (
 });
 
 test('options re-run: MP3 at 320 kbps is bigger than at 128', async ({ page }) => {
-  await page.goto('/free-tools/wav-to-mp3');
+  await page.goto('/free-tools/converter/wav-to-mp3');
   await page.locator('#opts summary').click();
   await page.locator('[name=bitrate]').selectOption('128');
   await page.locator('#file').setInputFiles('tests/fixtures/tone.wav');
@@ -81,4 +82,24 @@ test('options re-run: MP3 at 320 kbps is bigger than at 128', async ({ page }) =
   const big = await job.locator('.job-status').textContent();
   const kb = (s) => Number(s.match(/→ ([\d.]+) KB/)[1]);
   expect(kb(big)).toBeGreaterThan(kb(small) * 2);
+});
+
+test('pair pages sit under the converter: URL, breadcrumbs and links', async ({ page }) => {
+  await page.goto('/darmowe-narzedzia/konwerter/mov-na-gif');
+  const graph = JSON.parse(await page.locator('script[type="application/ld+json"]').textContent())['@graph'];
+  const crumbs = graph.find((n) => n['@type'] === 'BreadcrumbList').itemListElement.map((x) => x.item);
+  expect(crumbs).toEqual(['https://ciunkos.com/', 'https://ciunkos.com/darmowe-narzedzia', 'https://ciunkos.com/darmowe-narzedzia/konwerter', 'https://ciunkos.com/darmowe-narzedzia/konwerter/mov-na-gif']);
+  await expect(page.locator('.pair-links a[href="/darmowe-narzedzia/konwerter/mp4-na-gif"]')).toHaveCount(1);
+  await expect(page.locator('link[hreflang="en"]')).toHaveAttribute('href', 'https://ciunkos.com/free-tools/converter/mov-to-gif');
+  expect((await page.request.get('/free-tools/mov-to-gif')).status()).toBe(404);
+});
+
+test('switching the format during a conversion redoes it in the new format', async ({ page }) => {
+  await page.goto('/free-tools/converter/mp4-to-gif');
+  await page.locator('#file').setInputFiles('tests/fixtures/clip.mp4');
+  await expect(page.locator('.job').first()).toHaveAttribute('data-state', 'working');
+  await page.locator('#to').selectOption('mp3');
+  const job = page.locator('.job').first();
+  await expect(job).toHaveAttribute('data-state', 'done', { timeout: 30000 });
+  await expect(job.locator('a[download]')).toHaveAttribute('download', 'clip.mp3');
 });

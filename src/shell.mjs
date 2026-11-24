@@ -86,6 +86,7 @@ function contentHeader(lang, crumbs, alt) {
 export function shell({ id, layout, lang, wersja, path, C, ld = [], surface = '', tool = '', body = '', styles = [], scripts = [], updated, headExtra = '', themeColor = '#ffffff', ogId = id }) {
   const U = UI[lang], adres = BAZA + '/' + path[lang];
   const crumbs = [[U.home, BAZA + '/'], [HUB_NAME[lang], '/' + HUB[lang]]];
+  if (C.parent) crumbs.push(C.parent);
   if (id !== 'hub') crumbs.push([C.crumb, '/' + path[lang]]);
   const crumbLd = { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: crumbs.map(([n, u], i) => ({ '@type': 'ListItem', position: i + 1, name: n, item: u.startsWith('http') ? u : BAZA + u })) };
   const og = BAZA + ASSETY + '/og/' + ogId + '-' + lang + '.jpg?v=' + wersja.slice(-7);

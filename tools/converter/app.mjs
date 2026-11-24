@@ -114,10 +114,12 @@ async function convert(job) {
   const onProgress = (p) => { job.progress = p; paint(job); };
   if ((engine === 'media' || engine === 'video2gif' || engine === 'gif2video') && !('VideoDecoder' in window && 'AudioEncoder' in window)) throw new Error('no-webcodecs');
   job.phase = U.loading; paint(job);
-  if (engine === 'image') return (await import('./engines/image.mjs')).convertImage(job.file, job.fmt, to, o, onProgress);
-  if (engine === 'video2gif') return (await import('./engines/gif.mjs')).videoToGif(job.file, o, onProgress, job.ctrl.signal);
-  if (engine === 'gif2video') return (await import('./engines/gif.mjs')).gifToVideo(job.file, to, o, onProgress, job.ctrl.signal);
-  return (await import('./engines/media.mjs')).convertMedia(job.file, to, o, onProgress, job.ctrl.signal);
+  const mod = await import(engine === 'image' ? './engines/image.mjs' : engine === 'media' ? './engines/media.mjs' : './engines/gif.mjs');
+  job.phase = U.converting; paint(job);
+  if (engine === 'image') return mod.convertImage(job.file, job.fmt, to, o, onProgress);
+  if (engine === 'video2gif') return mod.videoToGif(job.file, o, onProgress, job.ctrl.signal);
+  if (engine === 'gif2video') return mod.gifToVideo(job.file, to, o, onProgress, job.ctrl.signal);
+  return mod.convertMedia(job.file, to, o, onProgress, job.ctrl.signal);
 }
 
 async function pump() {
@@ -135,7 +137,8 @@ async function pump() {
       job.state = 'done';
       track('file_converted', { from: job.fmt, to: r.to, engine: engineFor(job.fmt, to), ms: Math.round(performance.now() - job.started), mb: Math.round(job.file.size / 1048576) });
     } catch (e) {
-      job.state = e?.name === 'AbortError' || job.ctrl.signal.aborted ? 'canceled' : 'error';
+      job.state = job.requeue ? 'queued' : e?.name === 'AbortError' || job.ctrl.signal.aborted ? 'canceled' : 'error';
+      job.requeue = false;
       job.error = errorText(e);
       if (job.state === 'error') track('conversion_failed', { from: job.fmt, to, reason: String(e?.message || e).slice(0, 60) });
     }
@@ -150,6 +153,8 @@ async function pump() {
 
 function rerun() {
   let any = false;
+  /* A conversion already running uses the old settings: stop it and run it again with the new ones. */
+  for (const j of jobs) if (j.state === 'working') { j.requeue = true; j.ctrl?.abort(); any = true; }
   for (const j of jobs) if (j.state === 'done' || j.state === 'error' || j.state === 'canceled') { j.state = 'queued'; paint(j); any = true; }
   if (any) pump();
 }

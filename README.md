@@ -9,7 +9,7 @@ callout. Polish versions live under [/darmowe-narzedzia](https://ciunkos.com/dar
 | JWT decoder | [/free-tools/jwt-decoder](https://ciunkos.com/free-tools/jwt-decoder) | [/darmowe-narzedzia/dekoder-jwt](https://ciunkos.com/darmowe-narzedzia/dekoder-jwt) |
 | Character counter | [/free-tools/character-counter](https://ciunkos.com/free-tools/character-counter) | [/darmowe-narzedzia/licznik-znakow](https://ciunkos.com/darmowe-narzedzia/licznik-znakow) |
 | Base64 | [/free-tools/base64-encode-decode](https://ciunkos.com/free-tools/base64-encode-decode) | [/darmowe-narzedzia/base64-koduj-dekoduj](https://ciunkos.com/darmowe-narzedzia/base64-koduj-dekoduj) |
-| File converter (34 x-to-y pages) | [/free-tools/file-converter](https://ciunkos.com/free-tools/file-converter) | [/darmowe-narzedzia/konwerter-plikow](https://ciunkos.com/darmowe-narzedzia/konwerter-plikow) |
+| File converter (34 x-to-y pages) | [/free-tools/converter](https://ciunkos.com/free-tools/converter) | [/darmowe-narzedzia/konwerter](https://ciunkos.com/darmowe-narzedzia/konwerter) |
 
 ## How it is built
 
@@ -45,7 +45,7 @@ npm run deploy       # hamulec gate, build, unit tests, deploy, prod smoke test,
 
 ### File converter
 
-One engine, many pages: `tools/converter/pairs.mjs` lists the x-to-y pages (EN `mov-to-gif`, PL `mov-na-gif`), one line
+One engine, many pages: `tools/converter/pairs.mjs` lists the x-to-y pages under one root (EN `/free-tools/converter/mov-to-gif`, PL `/darmowe-narzedzia/konwerter/mov-na-gif`), one line
 each. Every page accepts any supported file. Engines load only when needed: mediabunny (WebCodecs) for audio and video,
 gifenc and gifuct-js for GIF, the browser's own decoders for images, libheif (wasm) for HEIC where the browser cannot.
 The libraries are vendored in `tools/converter/vendor/` by `node scripts/vendor.mjs` (esbuild, pinned versions, licences
